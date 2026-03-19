@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SuperHéroes Edu</title>
+    <title>Súper Lautaro Edu</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,6 +27,7 @@
         .anim-pop { animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .animate-firework { animation: firework 1.5s ease-out forwards; }
         .bg-spider-web { background-image: radial-gradient(circle at center, #ffffff 2px, transparent 2.5px); background-size: 20px 20px; }
+        .locked-sticker { filter: grayscale(100%) brightness(50%) contrast(80%); opacity: 0.6; }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -46,23 +47,63 @@
         const IconActivity = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>;
         const IconHeart = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>;
         const IconChart = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>;
+        const IconTrophy = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>;
 
-        // --- DATOS EDUCATIVOS ---
-        const PALABRAS = [
-          { id: 'perro', texto: 'PERRO', emoji: '🐶', letras: 'P - E - R - R - O' },
-          { id: 'gato', texto: 'GATO', emoji: '🐱', letras: 'G - A - T - O' },
-          { id: 'casa', texto: 'CASA', emoji: '🏠', letras: 'C - A - S - A' },
-          { id: 'sol', texto: 'SOL', emoji: '☀️', letras: 'S - O - L' },
-          { id: 'flor', texto: 'FLOR', emoji: '🌸', letras: 'F - L - O - R' },
-          { id: 'luna', texto: 'LUNA', emoji: '🌙', letras: 'L - U - N - A' },
-          { id: 'auto', texto: 'AUTO', emoji: '🚗', letras: 'A - U - T - O' },
+        // --- DATOS EDUCATIVOS CATEGORIZADOS ---
+        const DICCIONARIO = {
+            animales: [
+                { id: 'perro', texto: 'PERRO', emoji: '🐶', silabas: ['PE', 'RRO'] },
+                { id: 'gato', texto: 'GATO', emoji: '🐱', silabas: ['GA', 'TO'] },
+                { id: 'pato', texto: 'PATO', emoji: '🦆', silabas: ['PA', 'TO'] },
+                { id: 'mono', texto: 'MONO', emoji: '🐒', silabas: ['MO', 'NO'] }
+            ],
+            casa: [
+                { id: 'casa', texto: 'CASA', emoji: '🏠', silabas: ['CA', 'SA'] },
+                { id: 'cama', texto: 'CAMA', emoji: '🛏️', silabas: ['CA', 'MA'] },
+                { id: 'mesa', texto: 'MESA', emoji: '🪑', silabas: ['ME', 'SA'] },
+                { id: 'silla', texto: 'SILLA', emoji: '🪑', silabas: ['SI', 'LLA'] }
+            ],
+            comida: [
+                { id: 'agua', texto: 'AGUA', emoji: '💧', silabas: ['A', 'GUA'] },
+                { id: 'pan', texto: 'PAN', emoji: '🥖', silabas: ['PAN'] },
+                { id: 'sopa', texto: 'SOPA', emoji: '🥣', silabas: ['SO', 'PA'] },
+                { id: 'jugo', texto: 'JUGO', emoji: '🧃', silabas: ['JU', 'GO'] }
+            ],
+            cortas: [
+                { id: 'sol', texto: 'SOL', emoji: '☀️', silabas: ['SOL'] },
+                { id: 'flor', texto: 'FLOR', emoji: '🌸', silabas: ['FLOR'] },
+                { id: 'pez', texto: 'PEZ', emoji: '🐟', silabas: ['PEZ'] },
+                { id: 'luna', texto: 'LUNA', emoji: '🌙', silabas: ['LU', 'NA'] }
+            ]
+        };
+
+        // Guía de Trazos con coordenadas de Punto de Inicio (Centro X, Centro Y)
+        const LETRAS_TRAZO = [
+          { letra: 'A', startX: 0, startY: -100 },
+          { letra: 'E', startX: -60, startY: -100 },
+          { letra: 'I', startX: 0, startY: -100 },
+          { letra: 'O', startX: 0, startY: -100 },
+          { letra: 'U', startX: -60, startY: -100 },
+          { letra: 'M', startX: -80, startY: 100 },
+          { letra: 'P', startX: -60, startY: 100 },
+          { letra: 'S', startX: 60, startY: -100 },
+          { letra: 'L', startX: -60, startY: -100 },
+          { letra: 'T', startX: -60, startY: -100 }
         ];
 
-        const LETRAS_TRAZO = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'T'];
+        // --- SISTEMA DE RECOMPENSAS TANGIBLES ---
+        const STICKERS_ALBUM = [
+            { id: 1, req: 10, emoji: '🦸‍♂️', nombre: 'Súper Vuelo' },
+            { id: 2, req: 20, emoji: '🚀', nombre: 'Cohete Veloz' },
+            { id: 3, req: 30, emoji: '🦖', nombre: 'Dino Fuerza' },
+            { id: 4, req: 40, emoji: '🛸', nombre: 'Nave Mágica' },
+            { id: 5, req: 50, emoji: '🤖', nombre: 'Mega Robot' },
+            { id: 6, req: 60, emoji: '👑', nombre: 'Corona de Oro' }
+        ];
 
         // --- UTILIDADES DE VOZ Y SONIDO ---
         const audioCache = {}; 
-        const apiKey = ""; 
+        const apiKey = ""; // API inyectada globalmente por el entorno
         
         function writeString(view, offset, string) {
           for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
@@ -128,7 +169,8 @@
             window.speechSynthesis.speak(utterance);
           };
 
-          if (forceNative || texto.length <= 2) {
+          // Si pedimos lectura nativa (ej. una sílaba)
+          if (forceNative || texto.length <= 3) {
              pronunciarNativo(texto);
              return;
           }
@@ -181,12 +223,10 @@
         };
 
         const reproducirFestejoAudio = () => {
-          // Sonido 1: Campana mágica / Éxito fuerte
           const successAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
           successAudio.volume = 1.0;
           successAudio.play().catch(() => {});
 
-          // Sonido 2: Gritos de niños festejando con un leve retraso
           setTimeout(() => {
               const kidsAudio = new Audio('https://actions.google.com/sounds/v1/crowds/kids_cheering.ogg');
               kidsAudio.volume = 1.0;
@@ -203,14 +243,12 @@
             <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden flex items-center justify-center">
               <div className="absolute inset-0 bg-black/40 animate-fade-in mix-blend-overlay"></div>
               
-              {/* Letrero gigante motivacional */}
               <div className="absolute z-[101] flex items-center justify-center anim-pop">
                   <h1 className="text-7xl md:text-[150px] font-black text-yellow-400 tracking-widest uppercase text-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]" style={{ WebkitTextStroke: '6px #b45309' }}>
                       ¡GENIAL!
                   </h1>
               </div>
 
-              {/* Partículas de fuegos artificiales */}
               {particles.map((_, i) => {
                 const angle = Math.random() * Math.PI * 2;
                 const velocity = 20 + Math.random() * 30;
@@ -286,6 +324,8 @@
           const [celebrando, setCelebrando] = useState(false);
           const [tiempoSesion, setTiempoSesion] = useState(0);
           
+          const [categoriaActiva, setCategoriaActiva] = useState('animales');
+          
           const [estadisticas, setEstadisticas] = useState({
             lectura: 0, letras_rapidas: 0, escritura: 0, asociacion: 0, aventura: 0
           });
@@ -337,6 +377,7 @@
                           const data = snap.data();
                           if(data.estrellas) setEstrellas(data.estrellas);
                           if(data.juegos) setEstadisticas(prev => ({...prev, ...data.juegos}));
+                          if(data.categoriaActiva) setCategoriaActiva(data.categoriaActiva);
                        }
                     });
                   }
@@ -351,9 +392,9 @@
           useEffect(() => {
             if (user && window.fbDb && window.fbAppId) {
                const docRef = window.fbDoc(window.fbDb, 'artifacts', window.fbAppId, 'users', user.uid, 'game_data', 'stats');
-               window.fbSetDoc(docRef, { estrellas: estrellas, juegos: estadisticas }, {merge: true}).catch(e => console.log("Guardado local", e));
+               window.fbSetDoc(docRef, { estrellas, juegos: estadisticas, categoriaActiva }, {merge: true}).catch(e => console.log("Guardado local", e));
             }
-          }, [estrellas, estadisticas, user]);
+          }, [estrellas, estadisticas, categoriaActiva, user]);
 
           // Timer Global de Sesión (10 Minutos)
           useEffect(() => {
@@ -371,6 +412,16 @@
           const lanzarFestejo = () => {
             reproducirFestejoAudio();
             setCelebrando(true);
+            
+            // Check si desbloqueó un sticker nuevo (cada 10 estrellas)
+            const oldStars = estrellas;
+            const newStars = estrellas + 1;
+            if (newStars > 0 && newStars % 10 === 0 && newStars <= 60) {
+               setTimeout(() => {
+                 hablar(`¡Súper Lautaro! Desbloqueaste un nuevo sticker en tu Base Secreta.`, 1);
+               }, 1000);
+            }
+
             setTimeout(() => setCelebrando(false), 2500); 
           };
 
@@ -424,14 +475,15 @@
               )}
 
               <div className="w-full max-w-4xl flex-1 flex flex-col">
-                {vista === 'home' && <MenuPrincipal irA={irA} hablar={hablar} />}
-                {vista === 'lectura' && <ModuloLectura ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} />}
+                {vista === 'home' && <MenuPrincipal irA={irA} hablar={hablar} estrellas={estrellas} />}
+                {vista === 'lectura' && <ModuloLectura ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} categoria={categoriaActiva} />}
                 {vista === 'letras_rapidas' && <ModuloLetrasRapidas ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} />}
                 {vista === 'escritura' && <ModuloEscritura ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} />}
-                {vista === 'asociacion' && <ModuloAsociacion ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} />}
+                {vista === 'asociacion' && <ModuloAsociacion ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} categoria={categoriaActiva} />}
                 {vista === 'aventura' && <ModuloAventura ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} onFinish={() => irA('home')} />}
+                {vista === 'album' && <BaseSecreta hablar={hablar} estrellas={estrellas} irA={irA} playPop={playPop} />}
                 {vista === 'pausa_forzada' && <PausaObligatoria reanudar={reanudarJuego} hablar={hablar} playPop={playPop} />}
-                {vista === 'adultos' && <PanelAdultos estrellas={estrellas} tiempo={tiempoSesion} estadisticas={estadisticas} volver={() => irA('home')} playPop={playPop} />}
+                {vista === 'adultos' && <PanelAdultos estrellas={estrellas} tiempo={tiempoSesion} estadisticas={estadisticas} volver={() => irA('home')} playPop={playPop} categoriaActiva={categoriaActiva} setCategoriaActiva={setCategoriaActiva} />}
               </div>
             </div>
           );
@@ -439,27 +491,43 @@
 
         // --- MÓDULOS DE JUEGO ---
 
-        function MenuPrincipal({ irA, hablar }) {
-          useEffect(() => { hablar("¡Hola Superhéroe! Toca el juego que más te guste para empezar la misión.", 1); }, []);
+        function MenuPrincipal({ irA, hablar, estrellas }) {
+          useEffect(() => { hablar("¡Hola Súper Lautaro! Toca el juego que más te guste para empezar la misión, o entra a tu Base Secreta.", 1); }, []);
 
           const botones = [
             { id: 'lectura', titulo: 'Arañín', customSVG: <IconoSpidey/>, color: 'bg-gradient-to-b from-red-400 to-red-600 border-red-800 text-white', sombra: 'shadow-[0_8px_0_rgb(153,27,27)]' },
             { id: 'letras_rapidas', titulo: 'Rayo Veloz', customSVG: <IconoFlash/>, color: 'bg-gradient-to-b from-yellow-300 to-yellow-500 border-yellow-700 text-yellow-900', sombra: 'shadow-[0_8px_0_rgb(161,98,7)]' },
             { id: 'escritura', titulo: 'Fuerza Verde', customSVG: <IconoHulk/>, color: 'bg-gradient-to-b from-green-400 to-green-600 border-green-800 text-white', sombra: 'shadow-[0_8px_0_rgb(22,101,52)]' },
             { id: 'asociacion', titulo: 'Capitán Valor', customSVG: <IconoCapitan/>, color: 'bg-gradient-to-b from-blue-400 to-blue-600 border-blue-800 text-white', sombra: 'shadow-[0_8px_0_rgb(30,64,175)]' },
-            { id: 'aventura', titulo: 'Mi Aventura', customSVG: <IconoAventura/>, color: 'bg-gradient-to-b from-purple-400 to-purple-600 border-purple-800 text-white', sombra: 'shadow-[0_8px_0_rgb(107,33,168)]' }
+            { id: 'aventura', titulo: 'Mi Aventura', customSVG: <IconoAventura/>, color: 'bg-gradient-to-b from-purple-400 to-purple-600 border-purple-800 text-white', sombra: 'shadow-[0_8px_0_rgb(107,33,168)]' },
+            { id: 'album', titulo: 'Base Secreta', customSVG: <IconTrophy size={60} />, color: 'bg-gradient-to-b from-slate-700 to-slate-900 border-slate-950 text-white', sombra: 'shadow-[0_8px_0_rgb(2,6,23)]' }
           ];
 
           return (
-            <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-fade-in w-full pb-8">
-              <div className="bg-white px-10 py-4 rounded-[2rem] shadow-xl border-4 border-blue-200 mb-4 mt-4 transform -rotate-2">
-                <h1 className="text-4xl sm:text-6xl font-extrabold text-blue-800 text-center tracking-widest drop-shadow-sm">¡ELIGE TU MISIÓN!</h1>
+            <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-fade-in w-full pb-8">
+              
+              {/* Carnet de Súper Lautaro */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-8 py-4 rounded-[2rem] shadow-xl border-4 border-yellow-400 mb-2 mt-2 w-full max-w-lg flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white p-2 rounded-full border-4 border-yellow-400 shadow-inner">
+                    <div className="text-4xl">👦🏻</div>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-blue-200 tracking-widest uppercase text-left">Súper Héroe</h2>
+                    <h1 className="text-3xl font-black text-white tracking-wider">LAUTARO</h1>
+                  </div>
+                </div>
+                <div className="bg-blue-900 px-4 py-2 rounded-xl border-2 border-blue-950 shadow-inner text-center">
+                  <span className="text-sm font-bold text-blue-300 block uppercase">Nivel</span>
+                  <span className="text-2xl font-black text-yellow-400">{Math.floor(estrellas/10) + 1}</span>
+                </div>
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full px-4 max-w-5xl">
                 {botones.map(btn => (
                   <button key={btn.id} onClick={() => irA(btn.id)} className={`btn-game group ${btn.color} ${btn.sombra} border-4 rounded-[2.5rem] p-8 flex flex-col items-center justify-center gap-4 hover:scale-105 transition-transform`}>
                     <div className="bg-white/20 rounded-full p-4 backdrop-blur-sm w-36 h-36 flex items-center justify-center border-4 border-white/30 shadow-inner">
-                      <div className="w-28 h-28 transform transition-transform group-hover:scale-125 group-hover:rotate-12">
+                      <div className="w-28 h-28 transform transition-transform group-hover:scale-125 group-hover:rotate-12 flex items-center justify-center">
                         {btn.customSVG}
                       </div>
                     </div>
@@ -473,12 +541,43 @@
           );
         }
 
-        function ModuloLectura({ ganarEstrella, hablar, playPop, registrar }) {
+        // --- BASE SECRETA (ÁLBUM) ---
+        function BaseSecreta({ hablar, estrellas, irA, playPop }) {
+          useEffect(() => { hablar("¡Bienvenido a tu Base Secreta Lautaro! Aquí guardamos tus premios. ¡Consigue estrellas para destaparlos todos!", 1); }, []);
+
+          return (
+             <div className="flex-1 flex flex-col items-center p-6 bg-slate-900 rounded-[3rem] shadow-2xl border-8 border-slate-700 animate-fade-in text-center relative overflow-hidden w-full">
+                <h1 className="text-4xl sm:text-5xl font-extrabold text-yellow-400 tracking-widest drop-shadow-md mb-8 uppercase">Mi Base Secreta</h1>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 w-full max-w-2xl">
+                    {STICKERS_ALBUM.map(sticker => {
+                        const desbloqueado = estrellas >= sticker.req;
+                        return (
+                            <div key={sticker.id} onClick={() => { playPop(); desbloqueado ? hablar(`Este es tu ${sticker.nombre}`) : hablar(`Necesitas ${sticker.req} estrellas para este premio.`) }}
+                                 className={`flex flex-col items-center bg-slate-800 border-4 ${desbloqueado ? 'border-yellow-400 bg-gradient-to-b from-slate-700 to-slate-800' : 'border-slate-600'} rounded-3xl p-6 shadow-lg cursor-pointer transform transition hover:scale-105`}>
+                                <div className={`text-6xl mb-4 ${!desbloqueado && 'locked-sticker'}`}>
+                                    {desbloqueado ? sticker.emoji : '❓'}
+                                </div>
+                                <h3 className={`font-bold ${desbloqueado ? 'text-yellow-400' : 'text-slate-500'}`}>
+                                    {desbloqueado ? sticker.nombre : `${sticker.req} ⭐`}
+                                </h3>
+                            </div>
+                        )
+                    })}
+                </div>
+             </div>
+          );
+        }
+
+        // --- MÓDULOS CON SÍLABAS Y AYUDAS ---
+
+        function ModuloLectura({ ganarEstrella, hablar, playPop, registrar, categoria }) {
           const [index, setIndex] = useState(0);
           const [escuchando, setEscuchando] = useState(false);
-          const palabra = PALABRAS[index];
+          const palabrasCategoria = DICCIONARIO[categoria] || DICCIONARIO['animales'];
+          const palabra = palabrasCategoria[index % palabrasCategoria.length];
 
-          useEffect(() => { hablar("Vamos a atrapar palabras. Toca el micrófono y lee fuerte, o toca las letras para escucharlas.", 1); }, []);
+          useEffect(() => { hablar("Vamos a atrapar palabras. Toca el micrófono y lee fuerte, o toca las sílabas para escucharlas.", 1); }, []);
 
           const escucharMicrofono = () => {
             if (escuchando) return;
@@ -497,37 +596,18 @@
               if (!SpeechRecognition) throw new Error("No Soportado");
               const recognition = new SpeechRecognition();
               recognition.lang = 'es-MX';
-              
               let timeoutCompletado = false;
               
-              // Obligamos a que espere 4 segundos para que el niño tenga tiempo de hablar sí o sí
-              const timer = setTimeout(() => {
-                  timeoutCompletado = true;
-                  recognition.stop();
-                  secuenciaExito();
-              }, 4000);
-
-              recognition.onresult = () => {
-                  if(!timeoutCompletado) {
-                      clearTimeout(timer);
-                      secuenciaExito();
-                  }
-              };
-              
-              recognition.onerror = () => {
-                  // Ignoramos el error para no frustrar. El timer de 4 seg se encargará de dar el éxito.
-              };
-              
+              const timer = setTimeout(() => { timeoutCompletado = true; recognition.stop(); secuenciaExito(); }, 4000);
+              recognition.onresult = () => { if(!timeoutCompletado) { clearTimeout(timer); secuenciaExito(); } };
+              recognition.onerror = () => {};
               recognition.start();
             } catch (e) {
-              // Si no soporta micrófono, simulamos escuchar por 4 segundos
-              setTimeout(() => {
-                  secuenciaExito();
-              }, 4000);
+              setTimeout(() => { secuenciaExito(); }, 4000);
             }
           };
 
-          const avanzar = () => { setTimeout(() => { setIndex((prev) => (prev + 1) % PALABRAS.length); }, 3000); };
+          const avanzar = () => { setTimeout(() => { setIndex((prev) => prev + 1); }, 3000); };
 
           if (!palabra) return null;
 
@@ -540,10 +620,11 @@
               <div className="bg-white w-full max-w-lg rounded-[2rem] p-8 mb-8 border-8 border-red-200 shadow-2xl flex flex-col items-center z-10 anim-pop">
                 <div className="text-[120px] sm:text-[150px] leading-none mb-8 hover:scale-110 transition-transform drop-shadow-xl cursor-pointer" onClick={playPop}>{palabra.emoji}</div>
                 
-                <div className="flex justify-center gap-3 sm:gap-4 flex-wrap w-full">
-                  {palabra.texto.split('').map((letra, i) => (
-                    <button key={i} onClick={() => { playPop(); hablar(letra.toLowerCase(), 1, false, true); }} className="btn-game bg-gradient-to-b from-blue-400 to-blue-600 border-4 border-blue-800 text-white shadow-[0_6px_0_rgb(30,64,175)] font-black text-5xl sm:text-6xl p-4 sm:px-6 rounded-2xl hover:brightness-110">
-                      {letra}
+                <div className="flex justify-center gap-3 sm:gap-6 flex-wrap w-full">
+                  {/* MÉTODO SILÁBICO APLICADO AQUÍ */}
+                  {palabra.silabas.map((silaba, i) => (
+                    <button key={i} onClick={() => { playPop(); hablar(silaba.toLowerCase(), 1, false, true); }} className="btn-game bg-gradient-to-b from-blue-400 to-blue-600 border-4 border-blue-800 text-white shadow-[0_6px_0_rgb(30,64,175)] font-black text-5xl sm:text-6xl px-6 py-4 rounded-3xl hover:brightness-110 tracking-widest">
+                      {silaba}
                     </button>
                   ))}
                 </div>
@@ -636,16 +717,26 @@
           const canvasRef = useRef(null);
           const [letraIndex, setLetraIndex] = useState(0);
           const [dibujando, setDibujando] = useState(false);
-          const letra = LETRAS_TRAZO[letraIndex];
+          const letraObj = LETRAS_TRAZO[letraIndex % LETRAS_TRAZO.length];
 
-          useEffect(() => { hablar("Fuerza Verde aplasta. Dibuja la letra que ves en el centro para hacerte más fuerte.", 1); }, []);
-          useEffect(() => { if (letra) dibujarPlantilla(); }, [letraIndex]);
+          useEffect(() => { hablar("Fuerza Verde aplasta. Dibuja la letra empezando por el punto rojo.", 1); }, []);
+          useEffect(() => { if (letraObj) dibujarPlantilla(); }, [letraIndex]);
 
           const dibujarPlantilla = () => {
             const canvas = canvasRef.current; if (!canvas) return;
             const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dibujar la letra de fondo
             ctx.font = 'bold 240px Arial'; ctx.fillStyle = '#e5e7eb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(letra, canvas.width / 2, canvas.height / 2 + 20);
+            ctx.fillText(letraObj.letra, canvas.width / 2, canvas.height / 2 + 20);
+            
+            // INDICADOR VISUAL DE INICIO (Punto Rojo)
+            ctx.beginPath();
+            ctx.arc((canvas.width/2) + letraObj.startX, (canvas.height/2) + letraObj.startY + 20, 15, 0, Math.PI * 2);
+            ctx.fillStyle = '#ef4444'; // Red brillante
+            ctx.fill();
+            // Borde blanco al punto
+            ctx.lineWidth = 4; ctx.strokeStyle = 'white'; ctx.stroke();
           };
 
           const getCoordenadas = (e) => {
@@ -662,10 +753,10 @@
             playPop(); ganarEstrella(); registrar('escritura');
             const canvas = canvasRef.current; canvas.classList.add('anim-pop');
             setTimeout(() => canvas.classList.remove('anim-pop'), 500);
-            setTimeout(() => { setLetraIndex((prev) => (prev + 1) % LETRAS_TRAZO.length); }, 3000);
+            setTimeout(() => { setLetraIndex((prev) => prev + 1); }, 3000);
           };
 
-          if (!letra) return null;
+          if (!letraObj) return null;
 
           return (
             <div className="flex-1 flex flex-col items-center justify-center p-6 bg-stone-800 rounded-[3rem] shadow-2xl border-8 border-stone-600 animate-fade-in text-center relative overflow-hidden">
@@ -692,30 +783,37 @@
           );
         }
 
-        function ModuloAsociacion({ ganarEstrella, hablar, playPop, registrar }) {
-          const [ronda, setRonda] = useState(0);
+        function ModuloAsociacion({ ganarEstrella, hablar, playPop, registrar, categoria }) {
+          const [index, setIndex] = useState(0);
           const [opciones, setOpciones] = useState([]);
           const [errorId, setErrorId] = useState(null); 
-          const palabraCorrecta = PALABRAS[ronda];
+          
+          const palabrasCategoria = DICCIONARIO[categoria] || DICCIONARIO['animales'];
+          const palabraCorrecta = palabrasCategoria[index % palabrasCategoria.length];
 
-          useEffect(() => { hablar("Capitán Valor al rescate. Toca la imagen correcta que le corresponde a la palabra.", 1); }, []);
+          useEffect(() => { hablar("Capitán Valor al rescate. Toca la imagen que le corresponde a la palabra.", 1); }, []);
 
           useEffect(() => {
             if(!palabraCorrecta) return;
-            let incorrectas = PALABRAS.filter(p => p.id !== palabraCorrecta.id);
+            // Mezclar todas las palabras, sacar la correcta, tomar 2 incorrectas aleatorias
+            let todas = [];
+            Object.values(DICCIONARIO).forEach(arr => todas = todas.concat(arr));
+            let incorrectas = todas.filter(p => p.id !== palabraCorrecta.id);
             incorrectas.sort(() => 0.5 - Math.random());
             let seleccion = [palabraCorrecta, incorrectas[0], incorrectas[1]];
             seleccion.sort(() => 0.5 - Math.random());
             setOpciones(seleccion);
-          }, [ronda, palabraCorrecta]);
+          }, [index, palabraCorrecta]);
 
           const seleccionarOpcion = (opcion) => {
             playPop();
             if (opcion.id === palabraCorrecta.id) {
               ganarEstrella(); registrar('asociacion');
-              setTimeout(() => setRonda((prev) => (prev + 1) % PALABRAS.length), 3000); 
+              setTimeout(() => setIndex((prev) => prev + 1), 3000); 
             } else {
-              hablar("No pasa nada... ¡Sigue buscando!", 1); setErrorId(opcion.id);
+              // CORRECCIÓN POSITIVA CON VOZ NEURONAL
+              hablar(`Ese es el ${opcion.texto.toLowerCase()}. ¡Busquemos ${palabraCorrecta.texto.toLowerCase()}!`, 0.9); 
+              setErrorId(opcion.id);
               setTimeout(() => setErrorId(null), 500); 
             }
           };
@@ -751,7 +849,7 @@
           const canvasRef = useRef(null);
           const [errorId, setErrorId] = useState(null);
 
-          useEffect(() => { hablar("¡Bienvenido a Mi Aventura! ¿A qué superhéroe vas a elegir para cumplir esta misión secreta?", 1); }, []);
+          useEffect(() => { hablar("¡Bienvenido a Mi Aventura, Lautaro! ¿A qué superhéroe vas a elegir para cumplir esta misión secreta?", 1); }, []);
 
           const seleccionarHeroe = (id) => {
             playPop(); setHeroeSeleccionado(id); let nuevaHistoria = [];
@@ -762,7 +860,7 @@
               nuevaHistoria = [[{ texto: "Un perrito escapa muy rápido. Encuentra la 'P' para alcanzarlo.", target: 'P', falseLetras: ['D', 'B', 'R'] }, { texto: "Un globo se voló alto. Encuentra la 'G' para atraparlo.", target: 'G', falseLetras: ['C', 'O', 'Q'] }][Math.floor(Math.random() * 2)]];
               hablar("¡Súper! Rayo Veloz entra en acción.");
             } else if (id === 'spidey') {
-              nuevaHistoria = [[{ texto: "¡Alguien necesita ayuda! Lee la palabra 'RED' para lanzarla.", palabra: 'RED' }, { texto: "¡Atrapa al ladrón! Lee la palabra 'TELA' para frenarlo.", palabra: 'TELA' }][Math.floor(Math.random() * 2)]];
+              nuevaHistoria = [[{ texto: "¡Lautaro necesita ayuda! Lee la palabra 'RED' para lanzarla.", palabra: 'RED' }, { texto: "¡Atrapa al villano! Lee la palabra 'TELA' para frenarlo.", palabra: 'TELA' }][Math.floor(Math.random() * 2)]];
               hablar("¡Mira nomás! Arañín lanza su red.");
             } else if (id === 'capi') {
               nuevaHistoria = [[{ texto: "Escudo sin poder. Encuentra la ESTRELLA para activarlo.", correctEmoji: '⭐', falsos: ['🌙', '☀️'] }, { texto: "Puerta secreta cerrada. Encuentra la LLAVE para pasar.", correctEmoji: '🔑', falsos: ['🗡️', '🛡️'] }][Math.floor(Math.random() * 2)]];
@@ -774,7 +872,7 @@
           const resolverPaso = () => {
             playPop(); ganarEstrella(); registrar('aventura');
             setTimeout(() => {
-              hablar("¡Misión Completada! Lo hicimos súper bien.");
+              hablar("¡Misión Completada! Lo hicimos súper bien Lautaro.");
               setTimeout(() => { setHeroeSeleccionado(null); hablar("¿A quién elegimos ahora para la próxima misión?", 1); }, 3000);
             }, 2000);
           };
@@ -863,7 +961,7 @@
 
           useEffect(() => {
             if (fase === 'respirar') {
-              hablar("¡Hola! Llegó la hora de descansar un poquito. Vamos a respirar profundo durante 30 segundos, ¿me acompañas?", 0.9);
+              hablar("¡Hola Lautaro! Llegó la hora de descansar un poquito. Vamos a respirar profundo durante 30 segundos, ¿me acompañas?", 0.9);
               const timer = setInterval(() => { setSegundos(s => { if (s <= 1) { clearInterval(timer); setFase('boton'); return 0; } return s - 1; }); }, 1000);
               return () => clearInterval(timer);
             } else if (fase === 'boton') {
@@ -915,7 +1013,8 @@
           );
         }
 
-        function PanelAdultos({ estrellas, tiempo, estadisticas, volver, playPop }) {
+        // PANEL DE ACOMPAÑANTE CON SELECTOR DE CATEGORÍAS
+        function PanelAdultos({ estrellas, tiempo, estadisticas, volver, playPop, categoriaActiva, setCategoriaActiva }) {
           return (
             <div className="flex-1 flex flex-col p-6 bg-white rounded-3xl shadow-sm animate-fade-in border-4 border-gray-200">
               <div className="flex justify-between items-center mb-8 border-b-2 pb-4">
@@ -923,13 +1022,12 @@
                 <button onClick={() => { playPop(); volver(); }} className="text-blue-500 font-bold text-lg p-2 px-6 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">Cerrar Panel</button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-200 shadow-sm">
                   <h3 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-2"><IconActivity className="text-green-500"/> Rendimiento de Hoy</h3>
                   <ul className="space-y-4 text-lg">
                     <li className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100"><span className="text-slate-600 font-medium">Estrellas Obtenidas:</span><span className="font-black text-yellow-500 text-2xl flex items-center gap-1">{estrellas} <IconStar size={20} className="text-yellow-500 fill-yellow-500"/></span></li>
                     <li className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100"><span className="text-slate-600 font-medium">Tiempo de Sesión:</span><span className="font-black text-blue-600 text-xl">{Math.floor(tiempo / 60)} min {tiempo % 60} seg</span></li>
-                    <li className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100"><span className="text-slate-600 font-medium">Límite Saludable:</span><span className="font-black text-teal-600 text-xl">10 min / Pausa</span></li>
                   </ul>
                 </div>
                 <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-200 shadow-sm">
@@ -939,9 +1037,20 @@
                     <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">⚡ Memoria (Flash):</span><span className="font-bold text-slate-800">{estadisticas.letras_rapidas}</span></li>
                     <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">🟢 Trazo (Hulk):</span><span className="font-bold text-slate-800">{estadisticas.escritura}</span></li>
                     <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">🛡️ Asociación (Capi):</span><span className="font-bold text-slate-800">{estadisticas.asociacion}</span></li>
-                    <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">🌟 Aventuras:</span><span className="font-bold text-slate-800">{estadisticas.aventura}</span></li>
                   </ul>
                 </div>
+              </div>
+
+              {/* SECCIÓN NUEVA: SELECTOR DE CATEGORÍAS */}
+              <div className="bg-blue-50 p-6 rounded-2xl border-2 border-blue-200 shadow-sm">
+                 <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2"><IconSettings className="text-blue-500"/> Ajustes de Dificultad (Categoría Actual)</h3>
+                 <p className="text-slate-600 mb-4">Selecciona el grupo de palabras que Lautaro practicará en Arañín y Capitán Valor:</p>
+                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <button onClick={() => { playPop(); setCategoriaActiva('animales'); }} className={`p-4 rounded-xl font-bold border-2 transition-all ${categoriaActiva === 'animales' ? 'bg-blue-500 text-white border-blue-700 shadow-md' : 'bg-white text-slate-600 hover:bg-blue-100'}`}>🐶 Animales</button>
+                    <button onClick={() => { playPop(); setCategoriaActiva('casa'); }} className={`p-4 rounded-xl font-bold border-2 transition-all ${categoriaActiva === 'casa' ? 'bg-blue-500 text-white border-blue-700 shadow-md' : 'bg-white text-slate-600 hover:bg-blue-100'}`}>🏠 Casa</button>
+                    <button onClick={() => { playPop(); setCategoriaActiva('comida'); }} className={`p-4 rounded-xl font-bold border-2 transition-all ${categoriaActiva === 'comida' ? 'bg-blue-500 text-white border-blue-700 shadow-md' : 'bg-white text-slate-600 hover:bg-blue-100'}`}>🍎 Comida</button>
+                    <button onClick={() => { playPop(); setCategoriaActiva('cortas'); }} className={`p-4 rounded-xl font-bold border-2 transition-all ${categoriaActiva === 'cortas' ? 'bg-blue-500 text-white border-blue-700 shadow-md' : 'bg-white text-slate-600 hover:bg-blue-100'}`}>☀️ Cortas (3 Letras)</button>
+                 </div>
               </div>
             </div>
           );
