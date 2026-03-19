@@ -49,35 +49,72 @@
         const IconChart = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>;
         const IconTrophy = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>;
 
-        // --- DATOS EDUCATIVOS CATEGORIZADOS ---
+        // --- DATOS EDUCATIVOS CATEGORIZADOS (EXPANDIDOS) ---
         const DICCIONARIO = {
             animales: [
                 { id: 'perro', texto: 'PERRO', emoji: '🐶', silabas: ['PE', 'RRO'] },
                 { id: 'gato', texto: 'GATO', emoji: '🐱', silabas: ['GA', 'TO'] },
                 { id: 'pato', texto: 'PATO', emoji: '🦆', silabas: ['PA', 'TO'] },
-                { id: 'mono', texto: 'MONO', emoji: '🐒', silabas: ['MO', 'NO'] }
+                { id: 'mono', texto: 'MONO', emoji: '🐒', silabas: ['MO', 'NO'] },
+                { id: 'leon', texto: 'LEÓN', emoji: '🦁', silabas: ['LE', 'ÓN'] },
+                { id: 'tigre', texto: 'TIGRE', emoji: '🐯', silabas: ['TI', 'GRE'] },
+                { id: 'sapo', texto: 'SAPO', emoji: '🐸', silabas: ['SA', 'PO'] },
+                { id: 'vaca', texto: 'VACA', emoji: '🐮', silabas: ['VA', 'CA'] },
+                { id: 'toro', texto: 'TORO', emoji: '🐂', silabas: ['TO', 'RO'] },
+                { id: 'oso', texto: 'OSO', emoji: '🐻', silabas: ['O', 'SO'] },
+                { id: 'lobo', texto: 'LOBO', emoji: '🐺', silabas: ['LO', 'BO'] },
+                { id: 'pavo', texto: 'PAVO', emoji: '🦃', silabas: ['PA', 'VO'] },
+                { id: 'loro', texto: 'LORO', emoji: '🦜', silabas: ['LO', 'RO'] },
             ],
             casa: [
                 { id: 'casa', texto: 'CASA', emoji: '🏠', silabas: ['CA', 'SA'] },
                 { id: 'cama', texto: 'CAMA', emoji: '🛏️', silabas: ['CA', 'MA'] },
                 { id: 'mesa', texto: 'MESA', emoji: '🪑', silabas: ['ME', 'SA'] },
-                { id: 'silla', texto: 'SILLA', emoji: '🪑', silabas: ['SI', 'LLA'] }
+                { id: 'silla', texto: 'SILLA', emoji: '🪑', silabas: ['SI', 'LLA'] },
+                { id: 'vaso', texto: 'VASO', emoji: '🥛', silabas: ['VA', 'SO'] },
+                { id: 'taza', texto: 'TAZA', emoji: '☕', silabas: ['TA', 'ZA'] },
+                { id: 'tele', texto: 'TELE', emoji: '📺', silabas: ['TE', 'LE'] },
+                { id: 'sofa', texto: 'SOFÁ', emoji: '🛋️', silabas: ['SO', 'FÁ'] },
+                { id: 'bano', texto: 'BAÑO', emoji: '🚽', silabas: ['BA', 'ÑO'] },
+                { id: 'reloj', texto: 'RELOJ', emoji: '⌚', silabas: ['RE', 'LOJ'] },
+                { id: 'llave', texto: 'LLAVE', emoji: '🔑', silabas: ['LLA', 'VE'] },
+                { id: 'puerta', texto: 'PUERTA', emoji: '🚪', silabas: ['PUER', 'TA'] },
+                { id: 'cuna', texto: 'CUNA', emoji: '🚼', silabas: ['CU', 'NA'] },
             ],
             comida: [
                 { id: 'agua', texto: 'AGUA', emoji: '💧', silabas: ['A', 'GUA'] },
                 { id: 'pan', texto: 'PAN', emoji: '🥖', silabas: ['PAN'] },
                 { id: 'sopa', texto: 'SOPA', emoji: '🥣', silabas: ['SO', 'PA'] },
-                { id: 'jugo', texto: 'JUGO', emoji: '🧃', silabas: ['JU', 'GO'] }
+                { id: 'jugo', texto: 'JUGO', emoji: '🧃', silabas: ['JU', 'GO'] },
+                { id: 'leche', texto: 'LECHE', emoji: '🥛', silabas: ['LE', 'CHE'] },
+                { id: 'queso', texto: 'QUESO', emoji: '🧀', silabas: ['QUE', 'SO'] },
+                { id: 'uva', texto: 'UVA', emoji: '🍇', silabas: ['U', 'VA'] },
+                { id: 'pera', texto: 'PERA', emoji: '🍐', silabas: ['PE', 'RA'] },
+                { id: 'kiwi', texto: 'KIWI', emoji: '🥝', silabas: ['KI', 'WI'] },
+                { id: 'nuez', texto: 'NUEZ', emoji: '🥜', silabas: ['NUEZ'] },
+                { id: 'taco', texto: 'TACO', emoji: '🌮', silabas: ['TA', 'CO'] },
+                { id: 'pizza', texto: 'PIZZA', emoji: '🍕', silabas: ['PIZ', 'ZA'] },
+                { id: 'mate', texto: 'MATE', emoji: '🧉', silabas: ['MA', 'TE'] },
+                { id: 'papa', texto: 'PAPA', emoji: '🥔', silabas: ['PA', 'PA'] },
             ],
             cortas: [
                 { id: 'sol', texto: 'SOL', emoji: '☀️', silabas: ['SOL'] },
                 { id: 'flor', texto: 'FLOR', emoji: '🌸', silabas: ['FLOR'] },
                 { id: 'pez', texto: 'PEZ', emoji: '🐟', silabas: ['PEZ'] },
-                { id: 'luna', texto: 'LUNA', emoji: '🌙', silabas: ['LU', 'NA'] }
+                { id: 'luna', texto: 'LUNA', emoji: '🌙', silabas: ['LU', 'NA'] },
+                { id: 'mar', texto: 'MAR', emoji: '🌊', silabas: ['MAR'] },
+                { id: 'sal', texto: 'SAL', emoji: '🧂', silabas: ['SAL'] },
+                { id: 'luz', texto: 'LUZ', emoji: '💡', silabas: ['LUZ'] },
+                { id: 'tren', texto: 'TREN', emoji: '🚂', silabas: ['TREN'] },
+                { id: 'red', texto: 'RED', emoji: '🕸️', silabas: ['RED'] },
+                { id: 'rey', texto: 'REY', emoji: '👑', silabas: ['REY'] },
+                { id: 'pie', texto: 'PIE', emoji: '🦶', silabas: ['PIE'] },
+                { id: 'paz', texto: 'PAZ', emoji: '🕊️', silabas: ['PAZ'] },
+                { id: 'gol', texto: 'GOL', emoji: '⚽', silabas: ['GOL'] },
+                { id: 'dos', texto: 'DOS', emoji: '2️⃣', silabas: ['DOS'] },
             ]
         };
 
-        // Guía de Trazos con coordenadas de Punto de Inicio (Centro X, Centro Y)
         const LETRAS_TRAZO = [
           { letra: 'A', startX: 0, startY: -100 },
           { letra: 'E', startX: -60, startY: -100 },
@@ -91,7 +128,6 @@
           { letra: 'T', startX: -60, startY: -100 }
         ];
 
-        // --- SISTEMA DE RECOMPENSAS TANGIBLES ---
         const STICKERS_ALBUM = [
             { id: 1, req: 10, emoji: '🦸‍♂️', nombre: 'Súper Vuelo' },
             { id: 2, req: 20, emoji: '🚀', nombre: 'Cohete Veloz' },
@@ -103,7 +139,7 @@
 
         // --- UTILIDADES DE VOZ Y SONIDO ---
         const audioCache = {}; 
-        const apiKey = ""; // API inyectada globalmente por el entorno
+        const apiKey = ""; 
         
         function writeString(view, offset, string) {
           for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
@@ -159,8 +195,16 @@
           const pronunciarNativo = (txt) => {
             if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(txt);
-            utterance.rate = forceNative ? 0.7 : velocidad; 
+            
+            // TRUCO PARA EVITAR DELETREO EN SÍLABAS: 
+            // Convertimos a minúscula y agregamos un punto. Así el navegador cree que es una palabra completa.
+            let textoSeguro = txt.toLowerCase();
+            if (textoSeguro.length <= 4) {
+                textoSeguro = textoSeguro + ".";
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textoSeguro);
+            utterance.rate = forceNative ? 0.75 : velocidad; 
             utterance.pitch = 1.35; 
             const voices = window.speechSynthesis.getVoices();
             const vozLatinaFemenina = voices.find(v => (v.lang.includes('es-MX') || v.lang.includes('es-US') || v.lang.includes('es-419')) && (v.name.toLowerCase().includes('mujer') || v.name.toLowerCase().includes('female') || v.name.includes('Paulina') || v.name.includes('Sabina'))) || voices.find(v => v.lang.includes('es-MX') || v.lang.includes('es-US'));
@@ -169,8 +213,7 @@
             window.speechSynthesis.speak(utterance);
           };
 
-          // Si pedimos lectura nativa (ej. una sílaba)
-          if (forceNative || texto.length <= 3) {
+          if (forceNative || texto.length <= 4) {
              pronunciarNativo(texto);
              return;
           }
@@ -413,8 +456,6 @@
             reproducirFestejoAudio();
             setCelebrando(true);
             
-            // Check si desbloqueó un sticker nuevo (cada 10 estrellas)
-            const oldStars = estrellas;
             const newStars = estrellas + 1;
             if (newStars > 0 && newStars % 10 === 0 && newStars <= 60) {
                setTimeout(() => {
@@ -506,7 +547,6 @@
           return (
             <div className="flex-1 flex flex-col items-center justify-center space-y-6 animate-fade-in w-full pb-8">
               
-              {/* Carnet de Súper Lautaro */}
               <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-8 py-4 rounded-[2rem] shadow-xl border-4 border-yellow-400 mb-2 mt-2 w-full max-w-lg flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="bg-white p-2 rounded-full border-4 border-yellow-400 shadow-inner">
@@ -541,7 +581,6 @@
           );
         }
 
-        // --- BASE SECRETA (ÁLBUM) ---
         function BaseSecreta({ hablar, estrellas, irA, playPop }) {
           useEffect(() => { hablar("¡Bienvenido a tu Base Secreta Lautaro! Aquí guardamos tus premios. ¡Consigue estrellas para destaparlos todos!", 1); }, []);
 
@@ -569,10 +608,8 @@
           );
         }
 
-        // --- MÓDULOS CON SÍLABAS Y AYUDAS ---
-
         function ModuloLectura({ ganarEstrella, hablar, playPop, registrar, categoria }) {
-          const [index, setIndex] = useState(0);
+          const [index, setIndex] = useState(Math.floor(Math.random() * 10));
           const [escuchando, setEscuchando] = useState(false);
           const palabrasCategoria = DICCIONARIO[categoria] || DICCIONARIO['animales'];
           const palabra = palabrasCategoria[index % palabrasCategoria.length];
@@ -607,7 +644,11 @@
             }
           };
 
-          const avanzar = () => { setTimeout(() => { setIndex((prev) => prev + 1); }, 3000); };
+          const avanzar = () => { 
+             setTimeout(() => { 
+                setIndex(Math.floor(Math.random() * palabrasCategoria.length)); 
+             }, 3000); 
+          };
 
           if (!palabra) return null;
 
@@ -621,9 +662,8 @@
                 <div className="text-[120px] sm:text-[150px] leading-none mb-8 hover:scale-110 transition-transform drop-shadow-xl cursor-pointer" onClick={playPop}>{palabra.emoji}</div>
                 
                 <div className="flex justify-center gap-3 sm:gap-6 flex-wrap w-full">
-                  {/* MÉTODO SILÁBICO APLICADO AQUÍ */}
                   {palabra.silabas.map((silaba, i) => (
-                    <button key={i} onClick={() => { playPop(); hablar(silaba.toLowerCase(), 1, false, true); }} className="btn-game bg-gradient-to-b from-blue-400 to-blue-600 border-4 border-blue-800 text-white shadow-[0_6px_0_rgb(30,64,175)] font-black text-5xl sm:text-6xl px-6 py-4 rounded-3xl hover:brightness-110 tracking-widest">
+                    <button key={i} onClick={() => { playPop(); hablar(silaba, 1, false, true); }} className="btn-game bg-gradient-to-b from-blue-400 to-blue-600 border-4 border-blue-800 text-white shadow-[0_6px_0_rgb(30,64,175)] font-black text-5xl sm:text-6xl px-6 py-4 rounded-3xl hover:brightness-110 tracking-widest">
                       {silaba}
                     </button>
                   ))}
@@ -726,16 +766,13 @@
             const canvas = canvasRef.current; if (!canvas) return;
             const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Dibujar la letra de fondo
             ctx.font = 'bold 240px Arial'; ctx.fillStyle = '#e5e7eb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText(letraObj.letra, canvas.width / 2, canvas.height / 2 + 20);
             
-            // INDICADOR VISUAL DE INICIO (Punto Rojo)
             ctx.beginPath();
             ctx.arc((canvas.width/2) + letraObj.startX, (canvas.height/2) + letraObj.startY + 20, 15, 0, Math.PI * 2);
-            ctx.fillStyle = '#ef4444'; // Red brillante
+            ctx.fillStyle = '#ef4444'; 
             ctx.fill();
-            // Borde blanco al punto
             ctx.lineWidth = 4; ctx.strokeStyle = 'white'; ctx.stroke();
           };
 
@@ -784,7 +821,7 @@
         }
 
         function ModuloAsociacion({ ganarEstrella, hablar, playPop, registrar, categoria }) {
-          const [index, setIndex] = useState(0);
+          const [index, setIndex] = useState(Math.floor(Math.random() * 10));
           const [opciones, setOpciones] = useState([]);
           const [errorId, setErrorId] = useState(null); 
           
@@ -795,7 +832,6 @@
 
           useEffect(() => {
             if(!palabraCorrecta) return;
-            // Mezclar todas las palabras, sacar la correcta, tomar 2 incorrectas aleatorias
             let todas = [];
             Object.values(DICCIONARIO).forEach(arr => todas = todas.concat(arr));
             let incorrectas = todas.filter(p => p.id !== palabraCorrecta.id);
@@ -809,9 +845,8 @@
             playPop();
             if (opcion.id === palabraCorrecta.id) {
               ganarEstrella(); registrar('asociacion');
-              setTimeout(() => setIndex((prev) => prev + 1), 3000); 
+              setTimeout(() => setIndex(Math.floor(Math.random() * palabrasCategoria.length)), 3000); 
             } else {
-              // CORRECCIÓN POSITIVA CON VOZ NEURONAL
               hablar(`Ese es el ${opcion.texto.toLowerCase()}. ¡Busquemos ${palabraCorrecta.texto.toLowerCase()}!`, 0.9); 
               setErrorId(opcion.id);
               setTimeout(() => setErrorId(null), 500); 
