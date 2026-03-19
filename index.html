@@ -60,11 +60,42 @@
 
         const LETRAS_TRAZO = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'T'];
 
-        // --- UTILIDADES DE VOZ Y SONIDO ---
+        // --- UTILIDADES DE VOZ Y SONIDO (API NEURONAL RESTAURADA) ---
         const audioCache = {}; 
+        const apiKey = ""; // API inyectada globalmente por el entorno
         
-        // Clave en blanco ya que estamos en entorno seguro, pero aquí usamos fallback del navegador para HTML puro
-        const apiKey = ""; 
+        function writeString(view, offset, string) {
+          for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+        }
+
+        function pcmToWav(pcmData, sampleRate) {
+          const numChannels = 1;
+          const bitsPerSample = 16;
+          const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+          const blockAlign = numChannels * (bitsPerSample / 8);
+          const dataSize = pcmData.length * 2;
+          const buffer = new ArrayBuffer(44 + dataSize);
+          const view = new DataView(buffer);
+
+          writeString(view, 0, 'RIFF'); view.setUint32(4, 36 + dataSize, true); writeString(view, 8, 'WAVE');
+          writeString(view, 12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+          view.setUint16(22, numChannels, true); view.setUint32(24, sampleRate, true);
+          view.setUint32(28, byteRate, true); view.setUint16(32, blockAlign, true);
+          view.setUint16(34, bitsPerSample, true); writeString(view, 36, 'data');
+          view.setUint32(40, dataSize, true);
+
+          let offset = 44;
+          for (let i = 0; i < pcmData.length; i++) { view.setInt16(offset, pcmData[i], true); offset += 2; }
+          return buffer;
+        }
+
+        function base64ToInt16Array(base64) {
+          const binaryString = window.atob(base64);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+          return new Int16Array(bytes.buffer);
+        }
 
         const playPop = () => {
           try {
@@ -73,34 +104,81 @@
             const ctx = new AudioContext();
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(500, ctx.currentTime);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(500, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
           } catch(e) {}
         };
 
-        const hablar = async (texto, velocidad = 0.85, silencio = false, forceNative = true) => {
+        const hablar = async (texto, velocidad = 0.85, silencio = false, forceNative = false) => {
           if (silencio) return;
           
-          // En la versión HTML standalone, forzamos la voz nativa del dispositivo por seguridad de CORS y red
-          if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(texto);
-          utterance.rate = forceNative ? 0.8 : velocidad; 
-          utterance.pitch = 1.35; 
-          const voices = window.speechSynthesis.getVoices();
-          const vozLatinaFemenina = voices.find(v => (v.lang.includes('es-MX') || v.lang.includes('es-US') || v.lang.includes('es-419')) && (v.name.toLowerCase().includes('mujer') || v.name.toLowerCase().includes('female') || v.name.includes('Paulina') || v.name.includes('Sabina'))) || voices.find(v => v.lang.includes('es-MX') || v.lang.includes('es-US'));
-          
-          if (vozLatinaFemenina) utterance.voice = vozLatinaFemenina;
-          else utterance.lang = 'es-MX';
-          
-          window.speechSynthesis.speak(utterance);
+          // Si pedimos lectura nativa (para evitar delay al tocar una letra) o la API falla
+          const pronunciarNativo = (txt) => {
+            if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(txt);
+            utterance.rate = forceNative ? 0.7 : velocidad; 
+            utterance.pitch = 1.35; 
+            const voices = window.speechSynthesis.getVoices();
+            const vozLatinaFemenina = voices.find(v => (v.lang.includes('es-MX') || v.lang.includes('es-US') || v.lang.includes('es-419')) && (v.name.toLowerCase().includes('mujer') || v.name.toLowerCase().includes('female') || v.name.includes('Paulina') || v.name.includes('Sabina'))) || voices.find(v => v.lang.includes('es-MX') || v.lang.includes('es-US'));
+            if (vozLatinaFemenina) utterance.voice = vozLatinaFemenina;
+            else utterance.lang = 'es-MX';
+            window.speechSynthesis.speak(utterance);
+          };
+
+          if (forceNative || texto.length <= 2) {
+             pronunciarNativo(texto);
+             return;
+          }
+
+          if (audioCache[texto]) {
+            const audio = new Audio(audioCache[texto]);
+            audio.playbackRate = velocidad;
+            audio.play().catch(e => console.log(e));
+            return;
+          }
+
+          try {
+            const payload = {
+              contents: [{ parts: [{ text: `Habla muy dulce, despacio y cariñosa para un niño pequeño, en español latino: ${texto}` }] }],
+              generationConfig: {
+                responseModalities: ["AUDIO"],
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } } }
+              },
+              model: "gemini-2.5-flash-preview-tts"
+            };
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            const inlineData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+            
+            if (inlineData) {
+              const base64Audio = inlineData.data;
+              const rateMatch = inlineData.mimeType.match(/rate=(\d+)/);
+              const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+              const pcmData = base64ToInt16Array(base64Audio);
+              const wavBuffer = pcmToWav(pcmData, sampleRate);
+              const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+              const url = URL.createObjectURL(blob);
+              
+              audioCache[texto] = url; 
+              const audio = new Audio(url);
+              audio.playbackRate = velocidad;
+              await audio.play();
+              return;
+            } else {
+              throw new Error("No data inline");
+            }
+          } catch (error) {
+            console.log("Fallback a voz del navegador.");
+            pronunciarNativo(texto);
+          }
         };
 
         const reproducirFestejoAudio = () => {
@@ -185,6 +263,7 @@
 
         // --- APP PRINCIPAL ---
         function App() {
+          const [user, setUser] = useState(null);
           const [vista, setVista] = useState('home');
           const [vistaPrevia, setVistaPrevia] = useState('home');
           const [estrellas, setEstrellas] = useState(0);
@@ -195,12 +274,72 @@
             lectura: 0, letras_rapidas: 0, escritura: 0, asociacion: 0, aventura: 0
           });
 
+          // Pre-cargar voces nativas
           useEffect(() => {
             if ('speechSynthesis' in window) {
               window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
               window.speechSynthesis.getVoices(); 
             }
           }, []);
+
+          // Inicializar Firebase (Dinámico para funcionar perfectamente en HTML plano y guardar datos)
+          useEffect(() => {
+            let unsubscribeAuth;
+            const initFirebase = async () => {
+              try {
+                // Solución al error 'require is not defined' generado por Babel:
+                // Usamos 'new Function' para que Babel no transpile los import() nativos del navegador.
+                const firebaseAppModule = await (new Function('return import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js")'))();
+                const firebaseAuthModule = await (new Function('return import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js")'))();
+                const firebaseFirestoreModule = await (new Function('return import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")'))();
+
+                const { initializeApp } = firebaseAppModule;
+                const { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = firebaseAuthModule;
+                const { getFirestore, doc, setDoc, getDoc } = firebaseFirestoreModule;
+
+                const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+                if (!configStr) { console.warn("Firebase local mode"); return; }
+                const config = typeof configStr === 'string' ? JSON.parse(configStr) : configStr;
+                
+                const firebaseApp = initializeApp(config);
+                const firebaseAuth = getAuth(firebaseApp);
+                const firestoreDb = getFirestore(firebaseApp);
+                const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                
+                window.fbDb = firestoreDb; window.fbAppId = currentAppId; window.fbSetDoc = setDoc; window.fbDoc = doc;
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                  await signInWithCustomToken(firebaseAuth, __initial_auth_token);
+                } else {
+                  await signInAnonymously(firebaseAuth);
+                }
+
+                unsubscribeAuth = onAuthStateChanged(firebaseAuth, (u) => {
+                  setUser(u);
+                  if (u) {
+                    const docRef = doc(firestoreDb, 'artifacts', currentAppId, 'users', u.uid, 'game_data', 'stats');
+                    getDoc(docRef).then(snap => {
+                       if (snap.exists()) {
+                          const data = snap.data();
+                          if(data.estrellas) setEstrellas(data.estrellas);
+                          if(data.juegos) setEstadisticas(prev => ({...prev, ...data.juegos}));
+                       }
+                    });
+                  }
+                });
+              } catch (e) { console.error("Firebase init error:", e); }
+            };
+            initFirebase();
+            return () => { if (unsubscribeAuth) unsubscribeAuth(); };
+          }, []);
+
+          // Guardar progreso en Firebase cuando cambie
+          useEffect(() => {
+            if (user && window.fbDb && window.fbAppId) {
+               const docRef = window.fbDoc(window.fbDb, 'artifacts', window.fbAppId, 'users', user.uid, 'game_data', 'stats');
+               window.fbSetDoc(docRef, { estrellas: estrellas, juegos: estadisticas }, {merge: true}).catch(e => console.log("Guardado local", e));
+            }
+          }, [estrellas, estadisticas, user]);
 
           // Timer Global de Sesión (10 Minutos)
           useEffect(() => {
@@ -329,17 +468,19 @@
 
           const escucharMicrofono = () => {
             playPop();
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRecognition) {
+            try {
+              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              if (!SpeechRecognition) throw new Error("No Soportado");
               const recognition = new SpeechRecognition();
               recognition.lang = 'es-MX';
               recognition.onstart = () => setEscuchando(true);
               recognition.onresult = () => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); };
               recognition.onerror = () => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); };
               recognition.start();
-            } else {
+            } catch (e) {
+              // Fallback por si el navegador bloquea el micrófono o no es compatible
               setEscuchando(true);
-              setTimeout(() => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); }, 2000);
+              setTimeout(() => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); }, 2500);
             }
           };
 
@@ -358,7 +499,7 @@
                 
                 <div className="flex justify-center gap-3 sm:gap-4 flex-wrap w-full">
                   {palabra.texto.split('').map((letra, i) => (
-                    <button key={i} onClick={() => { playPop(); hablar(letra, 1, false, true); }} className="btn-game bg-gradient-to-b from-blue-400 to-blue-600 border-4 border-blue-800 text-white shadow-[0_6px_0_rgb(30,64,175)] font-black text-5xl sm:text-6xl p-4 sm:px-6 rounded-2xl hover:brightness-110">
+                    <button key={i} onClick={() => { playPop(); hablar(letra.toLowerCase(), 1, false, true); }} className="btn-game bg-gradient-to-b from-blue-400 to-blue-600 border-4 border-blue-800 text-white shadow-[0_6px_0_rgb(30,64,175)] font-black text-5xl sm:text-6xl p-4 sm:px-6 rounded-2xl hover:brightness-110">
                       {letra}
                     </button>
                   ))}
