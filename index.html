@@ -25,7 +25,7 @@
         @keyframes shrink { from { width: 100%; } to { width: 0%; } }
         .animate-error { animation: error-shake 0.4s ease-in-out; }
         .anim-pop { animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .animate-firework { animation: firework 1s ease-out forwards; }
+        .animate-firework { animation: firework 1.5s ease-out forwards; }
         .bg-spider-web { background-image: radial-gradient(circle at center, #ffffff 2px, transparent 2.5px); background-size: 20px 20px; }
     </style>
 </head>
@@ -60,9 +60,9 @@
 
         const LETRAS_TRAZO = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'T'];
 
-        // --- UTILIDADES DE VOZ Y SONIDO (API NEURONAL RESTAURADA) ---
+        // --- UTILIDADES DE VOZ Y SONIDO ---
         const audioCache = {}; 
-        const apiKey = ""; // API inyectada globalmente por el entorno
+        const apiKey = ""; 
         
         function writeString(view, offset, string) {
           for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
@@ -115,7 +115,6 @@
         const hablar = async (texto, velocidad = 0.85, silencio = false, forceNative = false) => {
           if (silencio) return;
           
-          // Si pedimos lectura nativa (para evitar delay al tocar una letra) o la API falla
           const pronunciarNativo = (txt) => {
             if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
@@ -182,32 +181,49 @@
         };
 
         const reproducirFestejoAudio = () => {
-          const audio = new Audio('https://actions.google.com/sounds/v1/crowds/kids_cheering.ogg');
-          audio.volume = 0.7;
-          audio.play().catch(() => console.log("Audio ignorado por falta de interacción"));
+          // Sonido 1: Campana mágica / Éxito fuerte
+          const successAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+          successAudio.volume = 1.0;
+          successAudio.play().catch(() => {});
+
+          // Sonido 2: Gritos de niños festejando con un leve retraso
+          setTimeout(() => {
+              const kidsAudio = new Audio('https://actions.google.com/sounds/v1/crowds/kids_cheering.ogg');
+              kidsAudio.volume = 1.0;
+              kidsAudio.play().catch(() => {});
+          }, 300);
         };
 
-        // --- COMPONENTE DE FUEGOS ARTIFICIALES ---
+        // --- COMPONENTE DE FUEGOS ARTIFICIALES Y LETRERO "¡GENIAL!" ---
         function FireworksOverlay() {
-          const particles = Array.from({ length: 60 });
+          const particles = Array.from({ length: 80 });
           const colors = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#ec4899', '#ffffff'];
           
           return (
             <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/20 animate-fade-in mix-blend-overlay"></div>
+              <div className="absolute inset-0 bg-black/40 animate-fade-in mix-blend-overlay"></div>
+              
+              {/* Letrero gigante motivacional */}
+              <div className="absolute z-[101] flex items-center justify-center anim-pop">
+                  <h1 className="text-7xl md:text-[150px] font-black text-yellow-400 tracking-widest uppercase text-center drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]" style={{ WebkitTextStroke: '6px #b45309' }}>
+                      ¡GENIAL!
+                  </h1>
+              </div>
+
+              {/* Partículas de fuegos artificiales */}
               {particles.map((_, i) => {
                 const angle = Math.random() * Math.PI * 2;
-                const velocity = 15 + Math.random() * 25;
+                const velocity = 20 + Math.random() * 30;
                 const tx = Math.cos(angle) * velocity;
                 const ty = Math.sin(angle) * velocity;
                 return (
-                  <div key={i} className="absolute rounded-full animate-firework drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                  <div key={i} className="absolute rounded-full animate-firework drop-shadow-[0_0_15px_rgba(255,255,255,1)]"
                     style={{
                       backgroundColor: colors[Math.floor(Math.random() * colors.length)],
                       '--tx': `${tx}vw`, '--ty': `${ty}vh`,
                       left: '50%', top: '50%',
-                      width: `${Math.random() * 15 + 10}px`, height: `${Math.random() * 15 + 10}px`,
-                      animationDelay: `${Math.random() * 0.2}s`,
+                      width: `${Math.random() * 20 + 10}px`, height: `${Math.random() * 20 + 10}px`,
+                      animationDelay: `${Math.random() * 0.1}s`,
                     }}
                   />
                 );
@@ -282,13 +298,11 @@
             }
           }, []);
 
-          // Inicializar Firebase (Dinámico para funcionar perfectamente en HTML plano y guardar datos)
+          // Inicializar Firebase
           useEffect(() => {
             let unsubscribeAuth;
             const initFirebase = async () => {
               try {
-                // Solución al error 'require is not defined' generado por Babel:
-                // Usamos 'new Function' para que Babel no transpile los import() nativos del navegador.
                 const firebaseAppModule = await (new Function('return import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js")'))();
                 const firebaseAuthModule = await (new Function('return import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js")'))();
                 const firebaseFirestoreModule = await (new Function('return import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")'))();
@@ -467,20 +481,49 @@
           useEffect(() => { hablar("Vamos a atrapar palabras. Toca el micrófono y lee fuerte, o toca las letras para escucharlas.", 1); }, []);
 
           const escucharMicrofono = () => {
+            if (escuchando) return;
             playPop();
+            setEscuchando(true);
+            
+            const secuenciaExito = () => {
+                setEscuchando(false); 
+                ganarEstrella(); 
+                registrar('lectura'); 
+                avanzar();
+            };
+
             try {
               const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
               if (!SpeechRecognition) throw new Error("No Soportado");
               const recognition = new SpeechRecognition();
               recognition.lang = 'es-MX';
-              recognition.onstart = () => setEscuchando(true);
-              recognition.onresult = () => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); };
-              recognition.onerror = () => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); };
+              
+              let timeoutCompletado = false;
+              
+              // Obligamos a que espere 4 segundos para que el niño tenga tiempo de hablar sí o sí
+              const timer = setTimeout(() => {
+                  timeoutCompletado = true;
+                  recognition.stop();
+                  secuenciaExito();
+              }, 4000);
+
+              recognition.onresult = () => {
+                  if(!timeoutCompletado) {
+                      clearTimeout(timer);
+                      secuenciaExito();
+                  }
+              };
+              
+              recognition.onerror = () => {
+                  // Ignoramos el error para no frustrar. El timer de 4 seg se encargará de dar el éxito.
+              };
+              
               recognition.start();
             } catch (e) {
-              // Fallback por si el navegador bloquea el micrófono o no es compatible
-              setEscuchando(true);
-              setTimeout(() => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); }, 2500);
+              // Si no soporta micrófono, simulamos escuchar por 4 segundos
+              setTimeout(() => {
+                  secuenciaExito();
+              }, 4000);
             }
           };
 
