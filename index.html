@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SuperHéroes Edu</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React y ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; overflow-x: hidden; touch-action: manipulation; }
+        .btn-game { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-game:active { transform: translateY(8px); border-bottom-width: 0px; margin-top: 8px; }
+        @keyframes error-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes firework { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
+        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
+        .animate-error { animation: error-shake 0.4s ease-in-out; }
+        .anim-pop { animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-firework { animation: firework 1s ease-out forwards; }
+        .bg-spider-web { background-image: radial-gradient(circle at center, #ffffff 2px, transparent 2.5px); background-size: 20px 20px; }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- ÍCONOS SVG INTEGRADOS ---
+        const IconHome = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>;
+        const IconStar = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>;
+        const IconSettings = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
+        const IconVolume = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>;
+        const IconMic = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>;
+        const IconRefresh = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>;
+        const IconCheck = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+        const IconActivity = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>;
+        const IconHeart = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>;
+        const IconChart = ({size=24, className=""}) => <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>;
+
+        // --- DATOS EDUCATIVOS ---
+        const PALABRAS = [
+          { id: 'perro', texto: 'PERRO', emoji: '🐶', letras: 'P - E - R - R - O' },
+          { id: 'gato', texto: 'GATO', emoji: '🐱', letras: 'G - A - T - O' },
+          { id: 'casa', texto: 'CASA', emoji: '🏠', letras: 'C - A - S - A' },
+          { id: 'sol', texto: 'SOL', emoji: '☀️', letras: 'S - O - L' },
+          { id: 'flor', texto: 'FLOR', emoji: '🌸', letras: 'F - L - O - R' },
+          { id: 'luna', texto: 'LUNA', emoji: '🌙', letras: 'L - U - N - A' },
+          { id: 'auto', texto: 'AUTO', emoji: '🚗', letras: 'A - U - T - O' },
+        ];
+
+        const LETRAS_TRAZO = ['A', 'E', 'I', 'O', 'U', 'M', 'P', 'S', 'L', 'T'];
+
+        // --- UTILIDADES DE VOZ Y SONIDO ---
+        const audioCache = {}; 
+        
+        // Clave en blanco ya que estamos en entorno seguro, pero aquí usamos fallback del navegador para HTML puro
+        const apiKey = ""; 
+
+        const playPop = () => {
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.1);
+          } catch(e) {}
+        };
+
+        const hablar = async (texto, velocidad = 0.85, silencio = false, forceNative = true) => {
+          if (silencio) return;
+          
+          // En la versión HTML standalone, forzamos la voz nativa del dispositivo por seguridad de CORS y red
+          if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(texto);
+          utterance.rate = forceNative ? 0.8 : velocidad; 
+          utterance.pitch = 1.35; 
+          const voices = window.speechSynthesis.getVoices();
+          const vozLatinaFemenina = voices.find(v => (v.lang.includes('es-MX') || v.lang.includes('es-US') || v.lang.includes('es-419')) && (v.name.toLowerCase().includes('mujer') || v.name.toLowerCase().includes('female') || v.name.includes('Paulina') || v.name.includes('Sabina'))) || voices.find(v => v.lang.includes('es-MX') || v.lang.includes('es-US'));
+          
+          if (vozLatinaFemenina) utterance.voice = vozLatinaFemenina;
+          else utterance.lang = 'es-MX';
+          
+          window.speechSynthesis.speak(utterance);
+        };
+
+        const reproducirFestejoAudio = () => {
+          const audio = new Audio('https://actions.google.com/sounds/v1/crowds/kids_cheering.ogg');
+          audio.volume = 0.7;
+          audio.play().catch(() => console.log("Audio ignorado por falta de interacción"));
+        };
+
+        // --- COMPONENTE DE FUEGOS ARTIFICIALES ---
+        function FireworksOverlay() {
+          const particles = Array.from({ length: 60 });
+          const colors = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#ec4899', '#ffffff'];
+          
+          return (
+            <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/20 animate-fade-in mix-blend-overlay"></div>
+              {particles.map((_, i) => {
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 15 + Math.random() * 25;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity;
+                return (
+                  <div key={i} className="absolute rounded-full animate-firework drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+                    style={{
+                      backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                      '--tx': `${tx}vw`, '--ty': `${ty}vh`,
+                      left: '50%', top: '50%',
+                      width: `${Math.random() * 15 + 10}px`, height: `${Math.random() * 15 + 10}px`,
+                      animationDelay: `${Math.random() * 0.2}s`,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          );
+        }
+
+        // --- ICONOS VECTORIALES (SVGs PERSONALIZADOS) ---
+        const IconoSpidey = () => (
+          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md">
+            <ellipse cx="50" cy="50" rx="42" ry="46" fill="#dc2626" stroke="#7f1d1d" strokeWidth="3" />
+            <path d="M50 4 V96 M8 50 H92 M18 20 L82 80 M18 80 L82 20" stroke="#7f1d1d" strokeWidth="2" fill="none" opacity="0.6" />
+            <path d="M45 45 Q25 15 12 45 Q20 70 45 65 Z" fill="#ffffff" stroke="#000000" strokeWidth="4" />
+            <path d="M55 45 Q75 15 88 45 Q80 70 55 65 Z" fill="#ffffff" stroke="#000000" strokeWidth="4" />
+          </svg>
+        );
+
+        const IconoFlash = () => (
+          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md">
+            <circle cx="50" cy="50" r="46" fill="#dc2626" stroke="#991b1b" strokeWidth="3" />
+            <circle cx="50" cy="50" r="32" fill="#ffffff" stroke="#facc15" strokeWidth="2" />
+            <path d="M55 15 L35 55 H50 L45 85 L70 45 H55 Z" fill="#facc15" stroke="#ca8a04" strokeWidth="3" strokeLinejoin="round" />
+          </svg>
+        );
+
+        const IconoHulk = () => (
+          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md">
+            <path d="M70,80 Q90,70 85,40 Q75,20 60,30 Q40,10 30,30 Q20,50 30,70 Q40,90 70,80 Z" fill="#22c55e" stroke="#166534" strokeWidth="4" />
+            <path d="M50,35 Q65,25 75,45" fill="none" stroke="#166534" strokeWidth="6" strokeLinecap="round"/>
+            <path d="M35,45 Q40,60 60,70" fill="none" stroke="#166534" strokeWidth="6" strokeLinecap="round"/>
+          </svg>
+        );
+
+        const IconoCapitan = () => (
+          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md">
+            <circle cx="50" cy="50" r="46" fill="#dc2626" />
+            <circle cx="50" cy="50" r="34" fill="#ffffff" />
+            <circle cx="50" cy="50" r="22" fill="#dc2626" />
+            <circle cx="50" cy="50" r="14" fill="#1e40af" />
+            <text x="50" y="58" fill="#ffffff" fontSize="20" fontWeight="900" fontFamily="Arial" textAnchor="middle">A</text>
+          </svg>
+        );
+
+        const IconoAventura = () => (
+          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md">
+            <ellipse cx="50" cy="45" rx="35" ry="12" fill="#b45309" />
+            <path d="M25,40 Q50,0 75,40 Z" fill="#92400e" />
+            <circle cx="65" cy="65" r="18" fill="#e0f2fe" stroke="#334155" strokeWidth="5" />
+            <line x1="78" y1="78" x2="95" y2="95" stroke="#334155" strokeWidth="8" strokeLinecap="round" />
+          </svg>
+        );
+
+        // --- APP PRINCIPAL ---
+        function App() {
+          const [vista, setVista] = useState('home');
+          const [vistaPrevia, setVistaPrevia] = useState('home');
+          const [estrellas, setEstrellas] = useState(0);
+          const [celebrando, setCelebrando] = useState(false);
+          const [tiempoSesion, setTiempoSesion] = useState(0);
+          
+          const [estadisticas, setEstadisticas] = useState({
+            lectura: 0, letras_rapidas: 0, escritura: 0, asociacion: 0, aventura: 0
+          });
+
+          useEffect(() => {
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+              window.speechSynthesis.getVoices(); 
+            }
+          }, []);
+
+          // Timer Global de Sesión (10 Minutos)
+          useEffect(() => {
+            const timerId = setInterval(() => { setTiempoSesion(t => t + 1); }, 1000);
+            return () => clearInterval(timerId);
+          }, []);
+
+          useEffect(() => {
+            if (tiempoSesion >= 600 && vista !== 'pausa_forzada') {
+              setVistaPrevia(vista === 'home' ? 'home' : vista);
+              setVista('pausa_forzada');
+            }
+          }, [tiempoSesion, vista]);
+
+          const lanzarFestejo = () => {
+            reproducirFestejoAudio();
+            setCelebrando(true);
+            setTimeout(() => setCelebrando(false), 2500); 
+          };
+
+          const ganarEstrella = () => {
+            setEstrellas(prev => prev + 1);
+            lanzarFestejo();
+          };
+
+          const registrarJuego = (juegoId) => {
+            setEstadisticas(prev => ({...prev, [juegoId]: prev[juegoId] + 1}));
+          };
+
+          const irA = (nuevaVista) => {
+            playPop();
+            setVista(nuevaVista);
+            window.scrollTo(0, 0);
+          };
+
+          const reanudarJuego = () => {
+            playPop();
+            setTiempoSesion(0);
+            irA(vistaPrevia);
+          };
+
+          return (
+            <div className="min-h-screen font-sans text-gray-800 flex flex-col items-center p-4 sm:p-6 pb-24 relative overflow-hidden" 
+                 style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
+              
+              {celebrando && <FireworksOverlay />}
+
+              {vista !== 'pausa_forzada' && (
+                <div className="w-full max-w-4xl flex justify-between items-center bg-white rounded-3xl shadow-lg p-4 mb-6 z-10 border-b-4 border-gray-200">
+                  <button onClick={() => irA('home')} className="flex items-center gap-2 text-blue-500 font-bold text-xl hover:bg-blue-50 p-2 rounded-2xl transition">
+                    <IconHome size={28} /> <span className="hidden sm:inline">Inicio</span>
+                  </button>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-center px-4 bg-slate-100 rounded-xl py-1 border-2 border-slate-200 shadow-inner">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tiempo</span>
+                      <span className="text-lg font-black text-blue-500">
+                        {Math.floor((600 - tiempoSesion) / 60)}:{( (600 - tiempoSesion) % 60 ).toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-yellow-100 px-5 py-2 rounded-full border-4 border-yellow-300 shadow-inner">
+                      <IconStar className="text-yellow-500 fill-yellow-500" size={32} />
+                      <span className="text-3xl font-extrabold text-yellow-700">{estrellas}</span>
+                    </div>
+                  </div>
+                  <button onClick={() => irA('adultos')} className="text-gray-400 hover:text-gray-600 p-2 transition-transform hover:rotate-90"><IconSettings size={28} /></button>
+                </div>
+              )}
+
+              <div className="w-full max-w-4xl flex-1 flex flex-col">
+                {vista === 'home' && <MenuPrincipal irA={irA} hablar={hablar} />}
+                {vista === 'lectura' && <ModuloLectura ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} />}
+                {vista === 'letras_rapidas' && <ModuloLetrasRapidas ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} />}
+                {vista === 'escritura' && <ModuloEscritura ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} />}
+                {vista === 'asociacion' && <ModuloAsociacion ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} />}
+                {vista === 'aventura' && <ModuloAventura ganarEstrella={ganarEstrella} hablar={hablar} playPop={playPop} registrar={registrarJuego} onFinish={() => irA('home')} />}
+                {vista === 'pausa_forzada' && <PausaObligatoria reanudar={reanudarJuego} hablar={hablar} playPop={playPop} />}
+                {vista === 'adultos' && <PanelAdultos estrellas={estrellas} tiempo={tiempoSesion} estadisticas={estadisticas} volver={() => irA('home')} playPop={playPop} />}
+              </div>
+            </div>
+          );
+        }
+
+        // --- MÓDULOS DE JUEGO ---
+
+        function MenuPrincipal({ irA, hablar }) {
+          useEffect(() => { hablar("¡Hola Superhéroe! Toca el juego que más te guste para empezar la misión.", 1); }, []);
+
+          const botones = [
+            { id: 'lectura', titulo: 'Arañín', customSVG: <IconoSpidey/>, color: 'bg-gradient-to-b from-red-400 to-red-600 border-red-800 text-white', sombra: 'shadow-[0_8px_0_rgb(153,27,27)]' },
+            { id: 'letras_rapidas', titulo: 'Rayo Veloz', customSVG: <IconoFlash/>, color: 'bg-gradient-to-b from-yellow-300 to-yellow-500 border-yellow-700 text-yellow-900', sombra: 'shadow-[0_8px_0_rgb(161,98,7)]' },
+            { id: 'escritura', titulo: 'Fuerza Verde', customSVG: <IconoHulk/>, color: 'bg-gradient-to-b from-green-400 to-green-600 border-green-800 text-white', sombra: 'shadow-[0_8px_0_rgb(22,101,52)]' },
+            { id: 'asociacion', titulo: 'Capitán Valor', customSVG: <IconoCapitan/>, color: 'bg-gradient-to-b from-blue-400 to-blue-600 border-blue-800 text-white', sombra: 'shadow-[0_8px_0_rgb(30,64,175)]' },
+            { id: 'aventura', titulo: 'Mi Aventura', customSVG: <IconoAventura/>, color: 'bg-gradient-to-b from-purple-400 to-purple-600 border-purple-800 text-white', sombra: 'shadow-[0_8px_0_rgb(107,33,168)]' }
+          ];
+
+          return (
+            <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-fade-in w-full pb-8">
+              <div className="bg-white px-10 py-4 rounded-[2rem] shadow-xl border-4 border-blue-200 mb-4 mt-4 transform -rotate-2">
+                <h1 className="text-4xl sm:text-6xl font-extrabold text-blue-800 text-center tracking-widest drop-shadow-sm">¡ELIGE TU MISIÓN!</h1>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full px-4 max-w-5xl">
+                {botones.map(btn => (
+                  <button key={btn.id} onClick={() => irA(btn.id)} className={`btn-game group ${btn.color} ${btn.sombra} border-4 rounded-[2.5rem] p-8 flex flex-col items-center justify-center gap-4 hover:scale-105 transition-transform`}>
+                    <div className="bg-white/20 rounded-full p-4 backdrop-blur-sm w-36 h-36 flex items-center justify-center border-4 border-white/30 shadow-inner">
+                      <div className="w-28 h-28 transform transition-transform group-hover:scale-125 group-hover:rotate-12">
+                        {btn.customSVG}
+                      </div>
+                    </div>
+                    <div className="text-center mt-4">
+                      <h2 className="text-3xl font-black leading-tight drop-shadow-md tracking-wider uppercase">{btn.titulo}</h2>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        function ModuloLectura({ ganarEstrella, hablar, playPop, registrar }) {
+          const [index, setIndex] = useState(0);
+          const [escuchando, setEscuchando] = useState(false);
+          const palabra = PALABRAS[index];
+
+          useEffect(() => { hablar("Vamos a atrapar palabras. Toca el micrófono y lee fuerte, o toca las letras para escucharlas.", 1); }, []);
+
+          const escucharMicrofono = () => {
+            playPop();
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+              const recognition = new SpeechRecognition();
+              recognition.lang = 'es-MX';
+              recognition.onstart = () => setEscuchando(true);
+              recognition.onresult = () => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); };
+              recognition.onerror = () => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); };
+              recognition.start();
+            } else {
+              setEscuchando(true);
+              setTimeout(() => { setEscuchando(false); ganarEstrella(); registrar('lectura'); avanzar(); }, 2000);
+            }
+          };
+
+          const avanzar = () => { setTimeout(() => { setIndex((prev) => (prev + 1) % PALABRAS.length); }, 3000); };
+
+          if (!palabra) return null;
+
+          return (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 bg-red-50 bg-spider-web rounded-[3rem] shadow-xl border-8 border-red-500 animate-fade-in text-center z-10 relative overflow-hidden">
+              <div className="bg-white px-6 py-3 rounded-full border-4 border-red-500 shadow-[0_4px_0_rgb(239,68,68)] text-red-600 mb-6 flex items-center gap-3 font-bold text-2xl z-10">
+                <div className="w-10 h-10"><IconoSpidey/></div> <span className="uppercase tracking-wider">Misión Arañín</span>
+              </div>
+              
+              <div className="bg-white w-full max-w-lg rounded-[2rem] p-8 mb-8 border-8 border-red-200 shadow-2xl flex flex-col items-center z-10 anim-pop">
+                <div className="text-[120px] sm:text-[150px] leading-none mb-8 hover:scale-110 transition-transform drop-shadow-xl cursor-pointer" onClick={playPop}>{palabra.emoji}</div>
+                
+                <div className="flex justify-center gap-3 sm:gap-4 flex-wrap w-full">
+                  {palabra.texto.split('').map((letra, i) => (
+                    <button key={i} onClick={() => { playPop(); hablar(letra, 1, false, true); }} className="btn-game bg-gradient-to-b from-blue-400 to-blue-600 border-4 border-blue-800 text-white shadow-[0_6px_0_rgb(30,64,175)] font-black text-5xl sm:text-6xl p-4 sm:px-6 rounded-2xl hover:brightness-110">
+                      {letra}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-6 w-full max-w-md z-10">
+                <button onClick={() => { playPop(); hablar(`Es la palabra ${palabra.texto}.`, 0.9); }} className="btn-game flex-1 bg-yellow-400 border-4 border-yellow-600 text-yellow-900 shadow-[0_6px_0_rgb(161,98,7)] font-black text-2xl py-5 rounded-[2rem] flex justify-center items-center gap-3">
+                  <IconVolume size={36} /> Escuchar
+                </button>
+                <button onClick={escucharMicrofono} className={`btn-game flex-1 font-black text-2xl py-5 rounded-[2rem] border-4 flex justify-center items-center gap-3 shadow-[0_6px_0_rgba(0,0,0,0.3)] ${escuchando ? 'bg-red-500 border-red-800 text-white animate-pulse' : 'bg-green-500 border-green-800 text-white'}`}>
+                  <IconMic size={36} /> {escuchando ? '¡Habla!' : 'Micrófono'}
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        function ModuloLetrasRapidas({ ganarEstrella, hablar, playPop, registrar }) {
+          const [estado, setEstado] = useState('inicio'); 
+          const [letraObjetivo, setLetraObjetivo] = useState('');
+          const [cuadricula, setCuadricula] = useState([]);
+          const [errorId, setErrorId] = useState(null);
+
+          useEffect(() => { hablar("Soy Rayo Veloz. Observa bien esta letra, y luego encuéntrala en la sopa de letras.", 1); iniciarRonda(); }, []);
+
+          const iniciarRonda = () => {
+            const abecedario = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const target = abecedario[Math.floor(Math.random() * abecedario.length)];
+            let letrasGrilla = abecedario.filter(l => l !== target).sort(() => 0.5 - Math.random()).slice(0, 15);
+            letrasGrilla.push(target); letrasGrilla.sort(() => 0.5 - Math.random());
+            setLetraObjetivo(target); setCuadricula(letrasGrilla.map((l, index) => ({ id: index, letra: l })));
+            setEstado('mostrando');
+          };
+
+          useEffect(() => {
+            if (estado === 'mostrando') {
+              const timer = setTimeout(() => { setEstado('buscando'); }, 5000);
+              return () => clearTimeout(timer);
+            }
+          }, [estado]);
+
+          const elegir = (opcion) => {
+            playPop();
+            if (opcion.letra === letraObjetivo) {
+              ganarEstrella(); registrar('letras_rapidas'); setEstado('festejo'); setTimeout(() => iniciarRonda(), 3000); 
+            } else {
+              hablar("¡Casi! Sigue buscando.", 1); setErrorId(opcion.id); setTimeout(() => setErrorId(null), 500);
+            }
+          };
+
+          return (
+            <div className="flex-1 flex flex-col items-center justify-center p-4 bg-slate-900 rounded-[3rem] shadow-2xl border-8 border-yellow-500 animate-fade-in text-center relative overflow-hidden">
+              <div className="bg-gradient-to-r from-red-600 to-red-800 px-6 py-3 rounded-full border-4 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)] text-white mb-6 flex items-center gap-3 font-black text-2xl z-10">
+                <div className="w-10 h-10"><IconoFlash/></div> <span className="uppercase tracking-widest text-yellow-300">Rayo Veloz</span>
+              </div>
+
+              {estado === 'mostrando' && (
+                <div className="flex flex-col items-center z-10 anim-pop w-full max-w-sm">
+                  <div className="text-3xl font-bold text-white mb-4 bg-black/50 px-6 py-2 rounded-full">Recuerda la letra</div>
+                  <div className="flex items-center justify-center w-64 h-64 bg-yellow-400 rounded-full border-8 border-white shadow-[0_0_40px_yellow]">
+                    <div className="text-[150px] font-black text-red-700">{letraObjetivo}</div>
+                  </div>
+                  <div className="w-full h-6 bg-slate-800 rounded-full mt-10 overflow-hidden border-2 border-slate-700 shadow-inner">
+                    <div className="h-full bg-gradient-to-r from-red-500 to-yellow-400 animate-[shrink_5s_linear_forwards] origin-left"></div>
+                  </div>
+                </div>
+              )}
+
+              {estado === 'buscando' && (
+                <div className="w-full max-w-lg anim-pop bg-slate-800/80 backdrop-blur-md p-6 sm:p-8 rounded-[3rem] border-4 border-yellow-500 shadow-[0_0_30px_rgba(250,204,21,0.3)] z-10 flex flex-col items-center">
+                  <h3 className="text-3xl font-black mb-6 text-yellow-400 uppercase tracking-widest text-center">¡Encuentra la {letraObjetivo}!</h3>
+                  <div className="grid grid-cols-4 gap-3 sm:gap-4 w-full max-w-[400px]">
+                    {cuadricula.map((item) => (
+                      <button key={item.id} onClick={() => elegir(item)} className={`btn-game aspect-square flex items-center justify-center bg-white border-4 border-gray-300 rounded-2xl shadow-[0_6px_0_rgb(209,213,219)] text-4xl sm:text-5xl font-black text-slate-800 hover:bg-yellow-100 ${errorId === item.id ? 'animate-error border-red-500 bg-red-100 text-red-700 shadow-[0_6px_0_rgb(239,68,68)]' : ''}`}>
+                        {item.letra}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {estado === 'festejo' && (
+                <div className="z-10 text-[180px] font-black text-yellow-400 anim-pop drop-shadow-[0_0_40px_yellow]">{letraObjetivo}</div>
+              )}
+            </div>
+          );
+        }
+
+        function ModuloEscritura({ ganarEstrella, hablar, playPop, registrar }) {
+          const canvasRef = useRef(null);
+          const [letraIndex, setLetraIndex] = useState(0);
+          const [dibujando, setDibujando] = useState(false);
+          const letra = LETRAS_TRAZO[letraIndex];
+
+          useEffect(() => { hablar("Fuerza Verde aplasta. Dibuja la letra que ves en el centro para hacerte más fuerte.", 1); }, []);
+          useEffect(() => { if (letra) dibujarPlantilla(); }, [letraIndex]);
+
+          const dibujarPlantilla = () => {
+            const canvas = canvasRef.current; if (!canvas) return;
+            const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = 'bold 240px Arial'; ctx.fillStyle = '#e5e7eb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(letra, canvas.width / 2, canvas.height / 2 + 20);
+          };
+
+          const getCoordenadas = (e) => {
+            const canvas = canvasRef.current; const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+          };
+
+          const iniciarTrazo = (e) => { e.preventDefault(); setDibujando(true); const pos = getCoordenadas(e); const ctx = canvasRef.current.getContext('2d'); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
+          const trazar = (e) => { e.preventDefault(); if (!dibujando) return; const pos = getCoordenadas(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineTo(pos.x, pos.y); ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 24; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); };
+          const terminarTrazo = () => setDibujando(false);
+
+          const validarTrazo = () => {
+            playPop(); ganarEstrella(); registrar('escritura');
+            const canvas = canvasRef.current; canvas.classList.add('anim-pop');
+            setTimeout(() => canvas.classList.remove('anim-pop'), 500);
+            setTimeout(() => { setLetraIndex((prev) => (prev + 1) % LETRAS_TRAZO.length); }, 3000);
+          };
+
+          if (!letra) return null;
+
+          return (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 bg-stone-800 rounded-[3rem] shadow-2xl border-8 border-stone-600 animate-fade-in text-center relative overflow-hidden">
+              <div className="bg-green-500 px-6 py-3 rounded-full border-4 border-green-700 shadow-[0_4px_0_rgb(21,128,61)] text-white mb-6 flex items-center gap-3 font-black text-2xl z-10">
+                <div className="w-10 h-10"><IconoHulk/></div> <span className="uppercase tracking-widest">Fuerza Verde</span>
+              </div>
+              
+              <div className="relative bg-stone-200 border-[12px] border-stone-400 rounded-[3rem] overflow-hidden touch-none shadow-[inset_0_10px_20px_rgba(0,0,0,0.5)] mb-8 anim-pop">
+                <canvas ref={canvasRef} width={300} height={300} className="bg-white cursor-crosshair"
+                  onMouseDown={iniciarTrazo} onMouseMove={trazar} onMouseUp={terminarTrazo} onMouseOut={terminarTrazo}
+                  onTouchStart={iniciarTrazo} onTouchMove={trazar} onTouchEnd={terminarTrazo}
+                />
+              </div>
+
+              <div className="flex gap-6 w-full max-w-sm z-10">
+                <button onClick={() => { playPop(); dibujarPlantilla(); }} className="btn-game flex-1 bg-stone-300 text-stone-700 font-black text-xl py-5 rounded-[2rem] border-4 border-stone-500 shadow-[0_6px_0_rgb(120,113,108)] flex justify-center items-center gap-2">
+                  <IconRefresh size={28} /> Limpiar
+                </button>
+                <button onClick={validarTrazo} className="btn-game flex-1 bg-gradient-to-b from-green-400 to-green-600 text-white font-black text-2xl py-5 rounded-[2rem] border-4 border-green-800 shadow-[0_6px_0_rgb(22,101,52)] flex justify-center items-center gap-2">
+                  <IconCheck size={28} /> ¡LISTO!
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        function ModuloAsociacion({ ganarEstrella, hablar, playPop, registrar }) {
+          const [ronda, setRonda] = useState(0);
+          const [opciones, setOpciones] = useState([]);
+          const [errorId, setErrorId] = useState(null); 
+          const palabraCorrecta = PALABRAS[ronda];
+
+          useEffect(() => { hablar("Capitán Valor al rescate. Toca la imagen correcta que le corresponde a la palabra.", 1); }, []);
+
+          useEffect(() => {
+            if(!palabraCorrecta) return;
+            let incorrectas = PALABRAS.filter(p => p.id !== palabraCorrecta.id);
+            incorrectas.sort(() => 0.5 - Math.random());
+            let seleccion = [palabraCorrecta, incorrectas[0], incorrectas[1]];
+            seleccion.sort(() => 0.5 - Math.random());
+            setOpciones(seleccion);
+          }, [ronda, palabraCorrecta]);
+
+          const seleccionarOpcion = (opcion) => {
+            playPop();
+            if (opcion.id === palabraCorrecta.id) {
+              ganarEstrella(); registrar('asociacion');
+              setTimeout(() => setRonda((prev) => (prev + 1) % PALABRAS.length), 3000); 
+            } else {
+              hablar("No pasa nada... ¡Sigue buscando!", 1); setErrorId(opcion.id);
+              setTimeout(() => setErrorId(null), 500); 
+            }
+          };
+
+          if (!palabraCorrecta) return null;
+
+          return (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-blue-200 rounded-[3rem] shadow-xl border-8 border-blue-400 animate-fade-in text-center relative overflow-hidden">
+              <div className="bg-blue-600 px-6 py-3 rounded-full border-4 border-blue-800 shadow-[0_4px_0_rgb(30,64,175)] text-white mb-8 flex items-center gap-3 font-black text-2xl z-10">
+                <div className="w-12 h-12"><IconoCapitan/></div> <span className="uppercase tracking-widest">Capitán Valor</span>
+              </div>
+
+              <div className="bg-white border-8 border-blue-500 rounded-[3rem] px-12 py-8 mb-12 shadow-[0_10px_20px_rgba(0,0,0,0.15)] anim-pop z-10 relative cursor-pointer hover:scale-105 transition-transform" onClick={() => {playPop(); hablar(palabraCorrecta.texto);}}>
+                <div className="absolute -top-6 -right-6 bg-red-500 w-12 h-12 rounded-full border-4 border-white flex items-center justify-center shadow-md"><span className="text-white font-bold">🎯</span></div>
+                <h2 className="text-5xl sm:text-7xl font-black text-blue-900 tracking-widest uppercase drop-shadow-md">{palabraCorrecta.texto}</h2>
+              </div>
+
+              <div className="flex justify-center gap-6 sm:gap-10 flex-wrap z-10">
+                {opciones.map((opcion, i) => (
+                  <button key={i} onClick={() => seleccionarOpcion(opcion)} className={`btn-game bg-white border-8 border-gray-200 rounded-[2.5rem] p-8 sm:p-10 text-[80px] sm:text-[100px] leading-none shadow-[0_8px_0_rgb(209,213,219)] flex flex-col items-center hover:bg-blue-50 hover:border-blue-400 ${errorId === opcion.id ? 'animate-error border-red-500 bg-red-50 shadow-[0_8px_0_rgb(239,68,68)]' : ''}`}>
+                    <span className="drop-shadow-lg">{opcion.emoji}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        function ModuloAventura({ ganarEstrella, hablar, playPop, registrar, onFinish }) {
+          const [heroeSeleccionado, setHeroeSeleccionado] = useState(null);
+          const [paso, setPaso] = useState(0);
+          const [historia, setHistoria] = useState([]);
+          const canvasRef = useRef(null);
+          const [errorId, setErrorId] = useState(null);
+
+          useEffect(() => { hablar("¡Bienvenido a Mi Aventura! ¿A qué superhéroe vas a elegir para cumplir esta misión secreta?", 1); }, []);
+
+          const seleccionarHeroe = (id) => {
+            playPop(); setHeroeSeleccionado(id); let nuevaHistoria = [];
+            if (id === 'hulk') {
+              nuevaHistoria = [[{ texto: "¡Un puente roto! Dibuja la 'U' grande para unirlo.", letra: 'U' }, { texto: "¡Roca en el camino! Dibuja la 'O' para hacerla rodar.", letra: 'O' }][Math.floor(Math.random() * 2)]];
+              hablar("¡Genial! Fuerza Verde está listo para la misión.");
+            } else if (id === 'flash') {
+              nuevaHistoria = [[{ texto: "Un perrito escapa muy rápido. Encuentra la 'P' para alcanzarlo.", target: 'P', falseLetras: ['D', 'B', 'R'] }, { texto: "Un globo se voló alto. Encuentra la 'G' para atraparlo.", target: 'G', falseLetras: ['C', 'O', 'Q'] }][Math.floor(Math.random() * 2)]];
+              hablar("¡Súper! Rayo Veloz entra en acción.");
+            } else if (id === 'spidey') {
+              nuevaHistoria = [[{ texto: "¡Alguien necesita ayuda! Lee la palabra 'RED' para lanzarla.", palabra: 'RED' }, { texto: "¡Atrapa al ladrón! Lee la palabra 'TELA' para frenarlo.", palabra: 'TELA' }][Math.floor(Math.random() * 2)]];
+              hablar("¡Mira nomás! Arañín lanza su red.");
+            } else if (id === 'capi') {
+              nuevaHistoria = [[{ texto: "Escudo sin poder. Encuentra la ESTRELLA para activarlo.", correctEmoji: '⭐', falsos: ['🌙', '☀️'] }, { texto: "Puerta secreta cerrada. Encuentra la LLAVE para pasar.", correctEmoji: '🔑', falsos: ['🗡️', '🛡️'] }][Math.floor(Math.random() * 2)]];
+              hablar("¡Guau! Capitán Valor viene al rescate.");
+            }
+            setHistoria(nuevaHistoria);
+          };
+
+          const resolverPaso = () => {
+            playPop(); ganarEstrella(); registrar('aventura');
+            setTimeout(() => {
+              hablar("¡Misión Completada! Lo hicimos súper bien.");
+              setTimeout(() => { setHeroeSeleccionado(null); hablar("¿A quién elegimos ahora para la próxima misión?", 1); }, 3000);
+            }, 2000);
+          };
+
+          if (!heroeSeleccionado) {
+            return (
+              <div className="flex-1 flex flex-col items-center justify-center w-full animate-fade-in">
+                <h2 className="text-4xl font-black text-purple-800 mb-8 bg-purple-100 px-8 py-4 rounded-full border-4 border-purple-300 shadow-md">¿Quién hará la misión?</h2>
+                <div className="grid grid-cols-2 gap-6 w-full max-w-lg px-4">
+                  <button onClick={() => seleccionarHeroe('spidey')} className="btn-game bg-red-500 border-4 border-red-800 text-white p-6 rounded-3xl shadow-[0_6px_0_rgb(153,27,27)] font-black text-2xl flex flex-col items-center justify-center gap-2"><div className="w-16 h-16"><IconoSpidey/></div> Arañín</button>
+                  <button onClick={() => seleccionarHeroe('flash')} className="btn-game bg-yellow-400 border-4 border-yellow-700 text-yellow-900 p-6 rounded-3xl shadow-[0_6px_0_rgb(161,98,7)] font-black text-2xl flex flex-col items-center justify-center gap-2"><div className="w-16 h-16"><IconoFlash/></div> Rayo</button>
+                  <button onClick={() => seleccionarHeroe('hulk')} className="btn-game bg-green-500 border-4 border-green-800 text-white p-6 rounded-3xl shadow-[0_6px_0_rgb(22,101,52)] font-black text-2xl flex flex-col items-center justify-center gap-2"><div className="w-16 h-16"><IconoHulk/></div> Fuerza</button>
+                  <button onClick={() => seleccionarHeroe('capi')} className="btn-game bg-blue-500 border-4 border-blue-800 text-white p-6 rounded-3xl shadow-[0_6px_0_rgb(30,64,175)] font-black text-2xl flex flex-col items-center justify-center gap-2"><div className="w-16 h-16"><IconoCapitan/></div> Valor</button>
+                </div>
+              </div>
+            );
+          }
+
+          const escena = historia[paso]; if (!escena) return null;
+
+          let HeroeIcono = IconoHulk;
+          if(heroeSeleccionado === 'flash') HeroeIcono = IconoFlash;
+          if(heroeSeleccionado === 'spidey') HeroeIcono = IconoSpidey;
+          if(heroeSeleccionado === 'capi') HeroeIcono = IconoCapitan;
+
+          return (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 bg-purple-50 border-8 border-purple-400 rounded-3xl shadow-xl animate-fade-in text-center z-10 relative">
+              <div className="bg-white px-8 py-6 rounded-3xl shadow-lg border-4 border-gray-800 mb-8 w-full max-w-2xl relative cursor-pointer hover:scale-105 transition-transform" onClick={() => {playPop(); hablar(escena.texto)}}>
+                <p className="text-3xl sm:text-4xl font-bold text-gray-800 leading-relaxed text-center">"{escena.texto}"</p>
+              </div>
+              <div className="absolute -top-6 bg-purple-500 p-3 rounded-full border-4 border-white shadow-lg w-24 h-24"><HeroeIcono /></div>
+
+              {heroeSeleccionado === 'hulk' && (
+                <div className="w-full flex flex-col items-center anim-pop mt-4">
+                   <div className="relative bg-stone-200 border-[8px] border-stone-400 rounded-3xl overflow-hidden touch-none mb-6">
+                     <canvas ref={canvasRef} width={280} height={280} className="bg-white cursor-pointer"
+                       onMouseDown={(e) => { e.target.getContext('2d').beginPath(); e.target.getContext('2d').moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY); }}
+                       onMouseMove={(e) => { if(e.buttons > 0) { let ctx = e.target.getContext('2d'); ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY); ctx.strokeStyle='#22c55e'; ctx.lineWidth=20; ctx.lineCap='round'; ctx.stroke(); } }}
+                       onTouchMove={(e) => { let rect = e.target.getBoundingClientRect(); let ctx = e.target.getContext('2d'); ctx.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top); ctx.strokeStyle='#22c55e'; ctx.lineWidth=20; ctx.lineCap='round'; ctx.stroke(); }}
+                     />
+                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-[200px] font-bold text-gray-200 opacity-50">{escena.letra}</div>
+                   </div>
+                   <button onClick={resolverPaso} className="btn-game bg-green-500 border-4 border-green-800 text-white font-black text-3xl py-4 px-12 rounded-[2rem] shadow-[0_8px_0_rgb(22,101,52)]">¡Fuerza!</button>
+                </div>
+              )}
+
+              {heroeSeleccionado === 'flash' && (
+                <div className="grid grid-cols-2 gap-6 w-full max-w-sm anim-pop mt-4">
+                  {[escena.target, ...escena.falseLetras].sort(()=>Math.random() - 0.5).map((l, i) => (
+                    <button key={i} onClick={() => { playPop(); l === escena.target ? resolverPaso() : (setErrorId(l), setTimeout(()=>setErrorId(null), 500)); }} className={`btn-game border-4 rounded-3xl p-8 text-6xl font-black shadow-[0_6px_0_rgb(161,98,7)] bg-yellow-400 text-yellow-900 border-yellow-600 ${errorId===l ? 'animate-error bg-red-400 text-white shadow-[0_6px_0_rgb(153,27,27)] border-red-800' : ''}`}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {heroeSeleccionado === 'spidey' && (
+                <div className="flex flex-col items-center anim-pop mt-4">
+                  <button onClick={resolverPaso} className="btn-game bg-red-500 border-8 border-red-800 rounded-[3rem] p-12 text-[80px] font-black text-white shadow-[0_12px_0_rgb(153,27,27)] uppercase tracking-widest hover:scale-110 transition-transform">
+                    {escena.palabra}
+                  </button>
+                </div>
+              )}
+
+              {heroeSeleccionado === 'capi' && (
+                <div className="flex justify-center gap-6 flex-wrap anim-pop mt-4">
+                  {[escena.correctEmoji, ...escena.falsos].sort(()=>Math.random() - 0.5).map((em, i) => (
+                    <button key={i} onClick={() => { playPop(); em === escena.correctEmoji ? resolverPaso() : (setErrorId(em), setTimeout(()=>setErrorId(null), 500)); }} className={`btn-game bg-white border-8 border-blue-300 rounded-full p-8 text-[80px] leading-none shadow-[0_8px_0_rgb(147,197,253)] ${errorId===em ? 'animate-error bg-red-100 border-red-500 shadow-[0_8px_0_rgb(239,68,68)]' : ''}`}>
+                      {em}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // =========================================================================
+        // PANEL ADULTOS Y PAUSA FORZADA
+        // =========================================================================
+
+        function PausaObligatoria({ reanudar, hablar, playPop }) {
+          const [fase, setFase] = useState('respirar'); 
+          const [segundos, setSegundos] = useState(30);
+          const [reto, setReto] = useState(null);
+
+          useEffect(() => {
+            if (fase === 'respirar') {
+              hablar("¡Hola! Llegó la hora de descansar un poquito. Vamos a respirar profundo durante 30 segundos, ¿me acompañas?", 0.9);
+              const timer = setInterval(() => { setSegundos(s => { if (s <= 1) { clearInterval(timer); setFase('boton'); return 0; } return s - 1; }); }, 1000);
+              return () => clearInterval(timer);
+            } else if (fase === 'boton') {
+              hablar("¡Qué lindo descanso! Toca el botón de desbloquear para que sigamos jugando.", 1);
+            }
+          }, [fase]);
+
+          const abrirMiniJuego = () => { playPop(); const minijuegos = ['buscar_letra', 'tocar_letra']; setReto(minijuegos[Math.floor(Math.random() * minijuegos.length)]); setFase('minijuego'); };
+          const resolverMiniJuego = () => { playPop(); hablar("¡Yuuuupi! ¡Lo lograste!", 1); reproducirFestejoAudio(); setTimeout(reanudar, 1500); };
+
+          return (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 bg-teal-50 rounded-[3rem] shadow-2xl border-8 border-teal-500 animate-fade-in text-center relative overflow-hidden">
+              {fase === 'respirar' && (
+                <div className="anim-pop flex flex-col items-center">
+                  <h2 className="text-4xl font-black text-teal-800 mb-8 uppercase tracking-wider">Pausa de Descanso</h2>
+                  <div className="relative flex items-center justify-center w-64 h-64 mb-8">
+                    <div className="absolute bg-teal-200 rounded-full opacity-50 animate-ping w-48 h-48" style={{animationDuration: '4s'}}></div>
+                    <div className="absolute bg-teal-300 rounded-full opacity-70 animate-ping w-32 h-32" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+                    <div className="text-[120px] z-10 drop-shadow-xl">🧘</div>
+                  </div>
+                  <div className="text-6xl font-black text-teal-600 drop-shadow-md">{segundos}</div>
+                </div>
+              )}
+              {fase === 'boton' && (
+                <div className="anim-pop flex flex-col items-center">
+                  <h2 className="text-4xl font-black text-teal-800 mb-12 uppercase tracking-wider">¡Descanso Terminado!</h2>
+                  <button onClick={abrirMiniJuego} className="btn-game bg-gradient-to-b from-yellow-400 to-yellow-600 border-4 border-yellow-800 shadow-[0_10px_0_rgb(161,98,7)] rounded-[3rem] py-8 px-12 text-4xl font-black text-white flex flex-col items-center gap-4">
+                    <span className="text-6xl">🔓</span> DESBLOQUEAR
+                  </button>
+                </div>
+              )}
+              {fase === 'minijuego' && reto === 'buscar_letra' && (
+                <div className="anim-pop flex flex-col items-center w-full max-w-md">
+                  <h2 className="text-3xl font-black text-teal-800 mb-8">¡Encuentra la letra A!</h2>
+                  <div className="grid grid-cols-2 gap-6 w-full">
+                    {['X', 'M', 'A', 'T'].sort(() => Math.random() - 0.5).map((l, i) => (
+                      <button key={i} onClick={() => { playPop(); l === 'A' ? resolverMiniJuego() : hablar("Uy, casi", 1); }} className="btn-game bg-white border-4 border-gray-300 rounded-2xl p-8 text-5xl font-black text-gray-800 shadow-[0_6px_0_rgb(209,213,219)] hover:bg-blue-50 hover:border-blue-400">{l}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {fase === 'minijuego' && reto === 'tocar_letra' && (
+                <div className="anim-pop flex flex-col items-center w-full max-w-md">
+                  <h2 className="text-3xl font-black text-teal-800 mb-8">Toca para leer</h2>
+                  <button onClick={resolverMiniJuego} className="btn-game bg-red-500 border-4 border-red-800 rounded-2xl p-12 text-7xl font-black text-white shadow-[0_8px_0_rgb(153,27,27)]">SOL ☀️</button>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        function PanelAdultos({ estrellas, tiempo, estadisticas, volver, playPop }) {
+          return (
+            <div className="flex-1 flex flex-col p-6 bg-white rounded-3xl shadow-sm animate-fade-in border-4 border-gray-200">
+              <div className="flex justify-between items-center mb-8 border-b-2 pb-4">
+                <h2 className="text-3xl font-black text-gray-800 flex items-center gap-3"><IconChart className="text-blue-500"/> Panel de Acompañante</h2>
+                <button onClick={() => { playPop(); volver(); }} className="text-blue-500 font-bold text-lg p-2 px-6 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">Cerrar Panel</button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-200 shadow-sm">
+                  <h3 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-2"><IconActivity className="text-green-500"/> Rendimiento de Hoy</h3>
+                  <ul className="space-y-4 text-lg">
+                    <li className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100"><span className="text-slate-600 font-medium">Estrellas Obtenidas:</span><span className="font-black text-yellow-500 text-2xl flex items-center gap-1">{estrellas} <IconStar size={20} className="text-yellow-500 fill-yellow-500"/></span></li>
+                    <li className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100"><span className="text-slate-600 font-medium">Tiempo de Sesión:</span><span className="font-black text-blue-600 text-xl">{Math.floor(tiempo / 60)} min {tiempo % 60} seg</span></li>
+                    <li className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100"><span className="text-slate-600 font-medium">Límite Saludable:</span><span className="font-black text-teal-600 text-xl">10 min / Pausa</span></li>
+                  </ul>
+                </div>
+                <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-200 shadow-sm">
+                  <h3 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-2"><IconHeart className="text-red-500"/> Juegos Completados</h3>
+                  <ul className="space-y-3 text-lg">
+                    <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">🕷️ Lectura (Arañín):</span><span className="font-bold text-slate-800">{estadisticas.lectura}</span></li>
+                    <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">⚡ Memoria (Flash):</span><span className="font-bold text-slate-800">{estadisticas.letras_rapidas}</span></li>
+                    <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">🟢 Trazo (Hulk):</span><span className="font-bold text-slate-800">{estadisticas.escritura}</span></li>
+                    <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">🛡️ Asociación (Capi):</span><span className="font-bold text-slate-800">{estadisticas.asociacion}</span></li>
+                    <li className="flex justify-between items-center"><span className="text-slate-600 flex items-center gap-2">🌟 Aventuras:</span><span className="font-bold text-slate-800">{estadisticas.aventura}</span></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
